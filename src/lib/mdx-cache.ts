@@ -6,6 +6,7 @@
  * invalidated automatically when files change.
  */
 
+import "server-only"
 import { Doc, getVersions, getAllDocs, getDocBySlug } from './mdx'
 import { watch } from 'fs'
 import { join } from 'path'

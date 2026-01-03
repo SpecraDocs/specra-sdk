@@ -5,6 +5,7 @@ import { Footer } from "./footer"
 import { SiteBanner } from "./site-banner"
 import { TabGroups } from "./tab-groups"
 import { Sidebar } from "./sidebar"
+import { SidebarMenuItems } from "./sidebar-menu-items"
 import type { SpecraConfig } from "@/lib/config"
 import type { Doc } from "@/lib/mdx"
 
@@ -63,11 +64,12 @@ export function MobileDocLayout({ header, docs, version, content, toc, config, a
 
       {/* Mobile Sidebar */}
       <div
-        className={`lg:hidden fixed top-0 left-0 h-full w-64 bg-background border-r border-border z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`lg:hidden fixed top-0 left-0 h-full w-64 bg-background border-r border-border z-40 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
-        <div className="pt-20 px-4">
-          <Sidebar
+        <div className="pt-20 px-4 h-full overflow-y-auto">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Documentation</h2>
+          <SidebarMenuItems
             docs={docs}
             version={version}
             config={config}

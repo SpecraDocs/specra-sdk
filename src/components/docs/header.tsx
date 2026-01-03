@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link"
 import { Search, Menu, Github, Twitter, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"

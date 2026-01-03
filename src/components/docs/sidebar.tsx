@@ -1,4 +1,4 @@
-"use client"
+
 
 import type { SpecraConfig } from "@/lib/config"
 import { SidebarMenuItems } from "./sidebar-menu-items"

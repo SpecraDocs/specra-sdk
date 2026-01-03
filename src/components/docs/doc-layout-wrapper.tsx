@@ -1,5 +1,3 @@
-"use client"
-
 import { ReactNode, useEffect, useRef } from "react"
 import { MobileDocLayout } from "./mobile-doc-layout"
 import { useTabContext } from "./tab-context"

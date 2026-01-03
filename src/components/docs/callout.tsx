@@ -1,4 +1,4 @@
-"use client"
+
 
 import type { ReactNode } from "react"
 import { Info, AlertTriangle, CheckCircle2, XCircle, Lightbulb } from "lucide-react"

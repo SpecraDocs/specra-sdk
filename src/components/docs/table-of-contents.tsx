@@ -82,9 +82,9 @@ export function TableOfContents({ items, config }: TableOfContentsProps) {
         <div className={`${maxHeight} overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50`}>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">On this page</h3>
           <nav className="space-y-1">
-            {filteredItems.map((item) => (
+            {filteredItems.map((item, index) => (
               <a
-                key={item.id}
+                key={`${item.id}-${index}`}
                 href={`#${item.id}`}
                 onClick={(e) => handleClick(e, item.id)}
                 className={`block text-sm transition-all cursor-pointer rounded-xl px-3 py-2 ${item.level === 3 ? "ml-3" : ""} ${

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist } from "next/font/google"
 import { getConfig } from "../lib/config"
 import { getAssetPath } from "../lib/utils"
 import { ConfigProvider } from "../components/config-provider"
@@ -8,13 +8,12 @@ import { TabProvider } from "../components/docs/tab-context"
 import "../styles/globals.css"
 
 const geist = Geist({ subsets: ["latin"] })
-const geistMono = Geist_Mono({ subsets: ["latin"] })
 
 /**
  * Generate metadata for the root layout
  * This can be imported and used by the user's app/layout.tsx
  */
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   const config = getConfig()
 
   return {
@@ -49,7 +48,10 @@ export function generateMetadata(): Metadata {
   }
 }
 
-export const metadata: Metadata = generateMetadata()
+export const metadata: Metadata = {
+  title: "Documentation",
+  description: "Modern documentation platform",
+}
 
 /**
  * Root layout component for Specra documentation sites

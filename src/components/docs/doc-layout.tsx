@@ -27,7 +27,7 @@ interface DocLayoutProps {
 
 
 
-export async function DocLayout({ content, meta, previousDoc, nextDoc, version, slug, config }: DocLayoutProps) {
+export function DocLayout({ content, meta, previousDoc, nextDoc, version, slug, config }: DocLayoutProps) {
   const isDevelopment = process.env.NODE_ENV === "development"
   // const config = getConfig()
 

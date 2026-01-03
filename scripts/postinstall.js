@@ -18,8 +18,8 @@ if (!isPostInstall) {
 }
 
 try {
-  // Find the project root (where package.json is)
-  const projectRoot = process.env.INIT_CWD || process.cwd();
+  // Find the project root (where the package is being installed)
+  const projectRoot = process.cwd();
 
   // Path to the schema file in node_modules
   const schemaSource = path.join(__dirname, '../src/lib/config.schema.json');

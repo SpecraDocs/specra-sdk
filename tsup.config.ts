@@ -34,6 +34,8 @@ export default defineConfig([
       'app/api/mdx-watch/route': 'src/app/api/mdx-watch/route.ts',
       'lib/index': 'src/lib/index.ts',
       'middleware/security': 'src/middleware/security.ts',
+      'layouts/index': 'src/layouts/index.ts',
+      'mdx-components': 'src/mdx-components.tsx',
     },
     format: ['esm', 'cjs'],
     dts: true,
@@ -47,6 +49,8 @@ export default defineConfig([
       'next/navigation',
       'next/image',
       'next/link',
+      // Force components index to be treated as external so it's a Client Reference
+      /components\/index/,
     ],
   },
 ])

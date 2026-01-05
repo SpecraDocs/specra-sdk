@@ -2,7 +2,7 @@
 
 import * as LucideIcons from "lucide-react"
 
-interface IconProps {
+export interface IconProps {
   icon: string | React.ReactNode
   iconType?: "regular" | "solid" | "light" | "thin" | "sharp-solid" | "duotone" | "brands"
   color?: string

@@ -11,7 +11,7 @@ import { ApiPlayground } from "./api-playground"
 import { CodeBlock } from "../code-block"
 import { Loader2 } from "lucide-react"
 
-interface ApiReferenceProps {
+export interface ApiReferenceProps {
   /**
    * Path to the API spec JSON file (relative to /public)
    * Example: "/api-specs/my-api.json"

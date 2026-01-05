@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { cloneElement, isValidElement } from "react"
 import { Info, AlertTriangle, CheckCircle2, XCircle, Lightbulb } from "lucide-react"
 
 interface CalloutProps {
@@ -50,7 +51,7 @@ export function Callout({ children, type = "info", title }: CalloutProps) {
       iconClassName: "text-red-600 dark:text-red-400",
       titleClassName: "text-red-700 dark:text-red-300",
       defaultTitle: "Danger",
-    },
+    }, 
     tip: {
       icon: Lightbulb,
       className: "bg-purple-500/10 border-purple-500/30 text-purple-900 dark:bg-purple-400/5 dark:border-purple-500/20 dark:text-purple-400",
@@ -82,9 +83,10 @@ export function Callout({ children, type = "info", title }: CalloutProps) {
           _title = strongChild.props.children
           // Remove the title from content
           content = childArray.map((child, idx) => {
-            if (idx === 0 && typeof child === "object" && "props" in child) {
-              const newChildren = (child as any).props.children.filter((c: any) => c !== strongChild)
-              return { ...child, props: { ...(child as any).props, children: newChildren } }
+            if (idx === 0 && isValidElement(child)) {
+              const newChildren = (child.props as any).children.filter((c: any) => c !== strongChild)
+              const childProps = child.props as Record<string, any>
+              return cloneElement(child, { ...childProps, children: newChildren } as any)
             }
             return child
           })

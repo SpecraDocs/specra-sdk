@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useRef } from "react"
+import { ReactNode, useEffect, useRef, useMemo } from "react"
 import { MobileDocLayout } from "./mobile-doc-layout"
 import { useTabContext } from "./tab-context"
 import type { SpecraConfig } from "@/lib/config"
@@ -22,6 +22,21 @@ export function DocLayoutWrapper({ header, docs, version, children, toc, config,
   const lastPageTabGroupRef = useRef<string | undefined>(undefined)
   const hasInitialized = useRef(false)
 
+  // Compute the initial/expected active tab synchronously (runs on both server and client)
+  const expectedActiveTab = useMemo(() => {
+    if (!config.navigation?.tabGroups || config.navigation.tabGroups.length === 0) {
+      return undefined
+    }
+
+    // If we have a currentPageTabGroup, that's what should be active
+    if (currentPageTabGroup) {
+      return currentPageTabGroup
+    }
+
+    // Otherwise, default to the first tab
+    return config.navigation.tabGroups[0]?.id
+  }, [currentPageTabGroup, config.navigation?.tabGroups])
+
   // Set tab based on page's tab group
   useEffect(() => {
     // If no tab groups configured, nothing to do
@@ -29,27 +44,13 @@ export function DocLayoutWrapper({ header, docs, version, children, toc, config,
       return
     }
 
-    // If we have a currentPageTabGroup, always sync to it
-    if (currentPageTabGroup) {
-      // Only update if it's different from the last one we set
-      if (lastPageTabGroupRef.current !== currentPageTabGroup) {
-        setActiveTabGroup(currentPageTabGroup)
-        lastPageTabGroupRef.current = currentPageTabGroup
-        hasInitialized.current = true
-      }
-      return
+    // If we have an expected tab and it's different from current, update it
+    if (expectedActiveTab && expectedActiveTab !== activeTabGroup) {
+      setActiveTabGroup(expectedActiveTab)
+      lastPageTabGroupRef.current = expectedActiveTab
+      hasInitialized.current = true
     }
-
-    // If no currentPageTabGroup but we haven't initialized yet, set to first tab
-    if (!hasInitialized.current && !activeTabGroup) {
-      const firstTab = config.navigation.tabGroups[0]?.id
-      if (firstTab) {
-        setActiveTabGroup(firstTab)
-        lastPageTabGroupRef.current = firstTab
-        hasInitialized.current = true
-      }
-    }
-  }, [currentPageTabGroup, setActiveTabGroup, activeTabGroup, config.navigation?.tabGroups])
+  }, [expectedActiveTab, setActiveTabGroup, activeTabGroup, config.navigation?.tabGroups])
 
   return (
     <MobileDocLayout
@@ -58,7 +59,7 @@ export function DocLayoutWrapper({ header, docs, version, children, toc, config,
       version={version}
       toc={toc}
       config={config}
-      activeTabGroup={activeTabGroup}
+      activeTabGroup={expectedActiveTab || activeTabGroup}
       onTabChange={setActiveTabGroup}
     >
       {children}

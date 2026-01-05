@@ -1,13 +1,12 @@
 import Link from "next/link"
 import { ChevronRight, FileText } from "lucide-react"
 import type { Doc } from "@/lib/mdx"
-import { ReactNode } from "react"
 import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 import { remarkCodeMeta } from "@/lib/remark-code-meta"
 import rehypeSlug from "rehype-slug"
 import { mdxComponents } from "./mdx-components"
-import { getConfig, processContentWithEnv, SpecraConfig } from "@/lib/config"
+import { processContentWithEnv, SpecraConfig } from "@/lib/config"
 import { sortSidebarItems } from "@/lib/sidebar-utils"
 
 interface CategoryIndexProps {

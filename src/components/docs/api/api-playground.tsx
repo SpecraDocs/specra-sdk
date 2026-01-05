@@ -8,13 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { CodeBlock } from "../code-block"
 import { Play, Loader2 } from "lucide-react"
 
-interface PathParam {
+export interface PathParam {
   name: string
   type: string
   example?: any
 }
 
-interface ApiPlaygroundProps {
+export interface ApiPlaygroundProps {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   path: string
   baseUrl?: string

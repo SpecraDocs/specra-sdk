@@ -4,7 +4,7 @@ import NextImage from "next/image"
 import { useState } from "react"
 import { ZoomIn, X } from "lucide-react"
 
-interface ImageProps {
+export interface ImageProps {
   src: string
   alt: string
   caption?: string

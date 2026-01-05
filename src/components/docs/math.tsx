@@ -1,8 +1,8 @@
-
+"use client"
 
 import { useEffect, useRef } from "react"
 
-interface MathProps {
+export interface MathProps {
   children: string
   block?: boolean
 }

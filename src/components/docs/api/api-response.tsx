@@ -1,6 +1,6 @@
 import { CodeBlock } from "../code-block"
 
-interface ApiResponseProps {
+export interface ApiResponseProps {
   status: number
   description?: string
   example?: any

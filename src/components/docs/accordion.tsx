@@ -1,8 +1,9 @@
 "use client"
+
 import * as React from "react"
 import { ChevronDown } from "lucide-react"
 
-interface AccordionItemProps {
+export interface AccordionItemProps {
   title: string | React.ReactNode
   children: React.ReactNode
   defaultOpen?: boolean
@@ -36,7 +37,7 @@ export function AccordionItem({ title, children, defaultOpen = false }: Accordio
   )
 }
 
-interface AccordionProps {
+export interface AccordionProps {
   children: React.ReactNode
   type?: "single" | "multiple"
   collapsible?: boolean  // For compatibility with radix-ui style API

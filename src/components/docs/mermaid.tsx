@@ -1,8 +1,8 @@
-
+"use client"
 
 import { useEffect, useRef, useState } from "react"
 
-interface MermaidProps {
+export interface MermaidProps {
   chart: string
   caption?: string
 }

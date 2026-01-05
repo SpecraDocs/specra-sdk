@@ -1,5 +1,3 @@
-"use client"
-
 // Documentation Components
 export * from './docs'
 

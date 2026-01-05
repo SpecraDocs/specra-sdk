@@ -1,13 +1,13 @@
-
+"use client"
 
 import React, { useState, Children, isValidElement } from "react"
 
-interface TabProps {
+export interface TabProps {
   label: string
   children: React.ReactNode
 }
 
-interface TabsProps {
+export interface TabsProps {
   children: React.ReactElement<TabProps> | React.ReactElement<TabProps>[]
   defaultValue?: string
 }

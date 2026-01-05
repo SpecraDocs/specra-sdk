@@ -13,6 +13,7 @@ import { getConfig } from "../lib/config"
 import { Suspense } from "react"
 import { DocLoading } from "../components/docs/doc-loading"
 import { DocLayoutWrapper } from "../components/docs/doc-layout-wrapper"
+import { mdxComponents, useMDXComponents } from "@/mdx-components"
 
 interface PageProps {
   params: Promise<{
@@ -196,6 +197,7 @@ export default async function DocPage({ params }: PageProps) {
                 version={version}
                 slug={slug}
                 config={config}
+                mdxComponents={useMDXComponents(mdxComponents) as any}
               />
             )
           }

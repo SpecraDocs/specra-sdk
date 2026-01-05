@@ -1,4 +1,4 @@
-interface ApiParam {
+export interface ApiParam {
   name: string
   type: string
   required?: boolean
@@ -6,7 +6,7 @@ interface ApiParam {
   default?: string
 }
 
-interface ApiParamsProps {
+export interface ApiParamsProps {
   title?: string
   params: ApiParam[]
 }

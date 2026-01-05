@@ -1,18 +1,16 @@
 import { ExternalLink, FileEdit } from "lucide-react"
-import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc"
+import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 import rehypeSlug from "rehype-slug"
 import { remarkCodeMeta } from "@/lib/remark-code-meta"
-import { mdxComponents } from "./mdx-components"
-import type { ComponentPropsWithoutRef } from "react"
+// import { mdxComponents } from "./mdx-components"
 import { DocNavigation } from "./doc-navigation"
 import { Breadcrumb } from "./breadcrumb"
 import { DocMetadata } from "./doc-metadata"
 import { DraftBadge } from "./draft-badge"
 import { DocTags } from "./doc-tags"
-import { SearchHighlight } from "./search-highlight"
 import type { DocMeta } from "@/lib/mdx"
-import { getConfig, processContentWithEnv, type SpecraConfig } from "@/lib/config"
+import { processContentWithEnv, type SpecraConfig } from "@/lib/config"
 
 interface DocLayoutProps {
   meta: DocMeta
@@ -28,11 +26,12 @@ interface DocLayoutProps {
   version: string
   slug: string
   config: SpecraConfig
+  mdxComponents: Record<string, React.ComponentType<any>>
 }
 
 
 
-export async function DocLayout({ content, meta, previousDoc, nextDoc, version, slug, config }: DocLayoutProps) {
+export function DocLayout({ content, meta, previousDoc, nextDoc, version, slug, config, mdxComponents }: DocLayoutProps) {
   const isDevelopment = process.env.NODE_ENV === "development"
   // const config = getConfig()
 
@@ -46,8 +45,6 @@ export async function DocLayout({ content, meta, previousDoc, nextDoc, version, 
 
   return (
     <article className="flex-1 min-w-0">
-      <SearchHighlight />
-
       {config.navigation?.showBreadcrumbs && (
         <Breadcrumb version={version} slug={slug} title={meta.title} />
       )}

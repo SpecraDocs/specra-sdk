@@ -1,7 +1,9 @@
+"use client"
+
 import { useState } from "react"
 import { Check, Copy } from "lucide-react"
 
-interface CodeBlockProps {
+export interface CodeBlockProps {
   code: string
   language: string
   filename?: string

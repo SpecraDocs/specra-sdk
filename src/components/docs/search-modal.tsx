@@ -7,6 +7,7 @@ import type { SpecraConfig } from "@/lib/config"
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog"
 
 interface SearchResult {
@@ -16,6 +17,7 @@ interface SearchResult {
   slug: string
   version: string
   category?: string
+  tab_group?: string
 }
 
 interface SearchModalProps {
@@ -119,7 +121,13 @@ export function SearchModal({ isOpen, onClose, config }: SearchModalProps) {
 
   const handleResultClick = (result: SearchResult) => {
     // Add search query as URL parameter for highlighting
-    const url = `/docs/${result.version}/${result.slug}?q=${encodeURIComponent(query)}`
+    // Include tab_group parameter to switch to the correct tab
+    const params = new URLSearchParams()
+    params.set('q', query)
+    if (result.tab_group) {
+      params.set('tab', result.tab_group)
+    }
+    const url = `/docs/${result.version}/${result.slug}?${params.toString()}`
     router.push(url)
     onClose()
   }
@@ -142,6 +150,7 @@ export function SearchModal({ isOpen, onClose, config }: SearchModalProps) {
         showCloseButton={false}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
+        <DialogTitle className="sr-only">Search Documentation</DialogTitle>
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -171,8 +180,8 @@ export function SearchModal({ isOpen, onClose, config }: SearchModalProps) {
                   key={result.id}
                   onClick={() => handleResultClick(result)}
                   className={`w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-l-2 ${index === selectedIndex
-                      ? "bg-muted/50 border-primary"
-                      : "border-transparent"
+                    ? "bg-muted/50 border-primary"
+                    : "border-transparent"
                     }`}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >

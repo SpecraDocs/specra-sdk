@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTabContext } from "./tab-context"
 import type { SpecraConfig } from "@/lib/config"
 
@@ -15,6 +16,7 @@ interface TabSyncProps {
  */
 export function TabSync({ currentPageTabGroup, config }: TabSyncProps) {
   const { activeTabGroup, setActiveTabGroup } = useTabContext()
+  const searchParams = useSearchParams()
   const hasInitialized = useRef(false)
 
   useEffect(() => {
@@ -23,13 +25,23 @@ export function TabSync({ currentPageTabGroup, config }: TabSyncProps) {
       return
     }
 
-    // Initialize with currentPageTabGroup or first tab on first load
+    // Check if there's a tab parameter in the URL (from search result click)
+    const urlTabGroup = searchParams.get('tab')
+
+    // Initialize with urlTabGroup, currentPageTabGroup, or first tab on first load
     if (!hasInitialized.current) {
-      const initialTab = currentPageTabGroup || config.navigation.tabGroups[0]?.id
+      const initialTab = urlTabGroup || currentPageTabGroup || config.navigation.tabGroups[0]?.id
       if (initialTab && initialTab !== activeTabGroup) {
         setActiveTabGroup(initialTab)
       }
       hasInitialized.current = true
+      return
+    }
+
+    // Priority: URL tab parameter > page's tab group
+    // If URL has explicit tab parameter, switch to it
+    if (urlTabGroup && urlTabGroup !== activeTabGroup) {
+      setActiveTabGroup(urlTabGroup)
       return
     }
 
@@ -38,7 +50,7 @@ export function TabSync({ currentPageTabGroup, config }: TabSyncProps) {
     if (currentPageTabGroup && currentPageTabGroup !== activeTabGroup) {
       setActiveTabGroup(currentPageTabGroup)
     }
-  }, [currentPageTabGroup, setActiveTabGroup, activeTabGroup, config.navigation?.tabGroups])
+  }, [currentPageTabGroup, setActiveTabGroup, activeTabGroup, config.navigation?.tabGroups, searchParams])
 
   return null
 }

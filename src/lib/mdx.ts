@@ -179,12 +179,6 @@ export async function getDocBySlug(slug: string, version = "v1.0.0"): Promise<Do
 
     if (doc) return doc
 
-    // If not found, try index.mdx in the folder
-    filePath = path.join(DOCS_DIR, sanitizedVersion, sanitizedSlug, "index.mdx")
-    doc = readDocFromFile(filePath, sanitizedSlug)
-
-    if (doc) return doc
-
     // If still not found, search all docs for a matching custom slug
     const versionDir = path.join(DOCS_DIR, sanitizedVersion)
     if (!fs.existsSync(versionDir)) {
@@ -195,7 +189,7 @@ export async function getDocBySlug(slug: string, version = "v1.0.0"): Promise<Do
 
     for (const file of mdxFiles) {
       const fileSlug = file.replace(/\.mdx$/, "")
-      const testPath = path.join(versionDir, file.endsWith("index.mdx") ? file : `${fileSlug}.mdx`)
+      const testPath = path.join(versionDir, `${fileSlug}.mdx`)
       const testDoc = readDocFromFile(testPath, fileSlug)
 
       if (testDoc && testDoc.slug === sanitizedSlug) {
@@ -224,13 +218,7 @@ export async function getAllDocs(version = "v1.0.0"): Promise<Doc[]> {
     const docs = await Promise.all(
       mdxFiles.map(async (file) => {
         const originalFilePath = file.replace(/\.mdx$/, "")
-        let slug = originalFilePath
-
-        // If this is an index.mdx, use the directory path as the slug
-        if (file.endsWith("/index.mdx") || file === "index.mdx") {
-          slug = path.dirname(file).replace(/\\/g, '/')
-          if (slug === ".") slug = "" // Root index
-        }
+        const slug = originalFilePath
 
         const doc = await getDocBySlug(slug, version)
 

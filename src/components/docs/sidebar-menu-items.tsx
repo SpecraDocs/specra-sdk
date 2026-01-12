@@ -178,7 +178,10 @@ export function SidebarMenuItems({ docs, version, onLinkClick, config, activeTab
         <div className="flex items-center group">
           <Link
             href={groupHref}
-            onClick={onLinkClick}
+            onClick={(e) => {
+              e.preventDefault()
+              toggleSection(groupKey)
+            }}
             className={`flex items-center gap-2 flex-1 px-3 py-2 text-sm font-semibold rounded-l-xl transition-all ${isGroupActive
                 ? "bg-primary/10 text-primary"
                 : "text-foreground hover:bg-accent/50"

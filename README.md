@@ -1,6 +1,7 @@
 # Specra
 
 A modern documentation library for Next.js that makes it easy to create beautiful, feature-rich documentation sites.
+To view the docs, visit [Specra Docs](https://specra.vercel.app).
 
 ## Features
 

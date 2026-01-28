@@ -138,8 +138,15 @@
           ]
         },
         "i18n": {
-          "description": "Enable i18n (internationalization)",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/I18nConfig"
+            }
+          ],
+          "description": "Internationalization (i18n) configuration Set to true to enable with defaults, or provide configuration object"
         },
         "showAuthors": {
           "description": "Show author information",
@@ -260,6 +267,39 @@
           "type": "array"
         }
       },
+      "type": "object"
+    },
+    "I18nConfig": {
+      "additionalProperties": false,
+      "description": "Internationalization configuration",
+      "properties": {
+        "defaultLocale": {
+          "description": "The default locale (e.g. 'en') - used when no locale is present in URL",
+          "type": "string"
+        },
+        "localeNames": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of locale codes to display names (e.g. { en: \"English\", fr: \"Français\" })",
+          "type": "object"
+        },
+        "locales": {
+          "description": "List of supported locales (e.g. ['en', 'fr', 'es'])",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "prefixDefault": {
+          "description": "Whether to use locale subpaths for default locale (default: false)",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "defaultLocale",
+        "locales"
+      ],
       "type": "object"
     },
     "NavigationConfig": {

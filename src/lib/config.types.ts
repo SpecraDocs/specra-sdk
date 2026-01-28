@@ -192,8 +192,25 @@ export interface FeaturesConfig {
   showTags?: boolean
   /** Enable version dropdown */
   versioning?: boolean
-  /** Enable i18n (internationalization) */
-  i18n?: boolean
+  /** 
+   * Internationalization (i18n) configuration
+   * Set to true to enable with defaults, or provide configuration object
+   */
+  i18n?: boolean | I18nConfig
+}
+
+/**
+ * Internationalization configuration
+ */
+export interface I18nConfig {
+  /** The default locale (e.g. 'en') - used when no locale is present in URL */
+  defaultLocale: string
+  /** List of supported locales (e.g. ['en', 'fr', 'es']) */
+  locales: string[]
+  /** Map of locale codes to display names (e.g. { en: "English", fr: "Français" }) */
+  localeNames?: Record<string, string>
+  /** Whether to use locale subpaths for default locale (default: false) */
+  prefixDefault?: boolean
 }
 
 /**

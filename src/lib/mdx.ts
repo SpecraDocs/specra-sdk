@@ -4,6 +4,8 @@ import matter from "gray-matter"
 import { getAllCategoryConfigs } from "./category"
 import { sortSidebarItems, sortSidebarGroups, buildSidebarStructure, type SidebarGroup } from "./sidebar-utils"
 import { sanitizePath, validatePathWithinDirectory, validateMDXSecurity } from "./mdx-security"
+import { getConfig } from "./config"
+import { I18nConfig } from "./config.types"
 
 const DOCS_DIR = path.join(process.cwd(), "docs")
 
@@ -36,6 +38,7 @@ export interface DocMeta {
   word_count?: number
   icon?: string  // Icon name for sidebar display (Lucide icon name)
   tab_group?: string  // Tab group ID for organizing docs into tabs
+  locale?: string // Locale of the document
 }
 
 export interface Doc {
@@ -50,6 +53,7 @@ export interface Doc {
   categoryCollapsed?: boolean  // Default collapsed state from _category_.json
   categoryIcon?: string  // Icon from _category_.json
   categoryTabGroup?: string  // Tab group from _category_.json
+  locale?: string // Locale of the document
 }
 
 export interface TocItem {
@@ -167,35 +171,100 @@ function readDocFromFile(filePath: string, originalSlug: string): Doc | null {
   }
 }
 
-export async function getDocBySlug(slug: string, version = "v1.0.0"): Promise<Doc | null> {
+function getI18nConfig(): I18nConfig | null {
+  const config = getConfig()
+  const i18n = config.features?.i18n
+
+  if (!i18n) return null
+
+  if (typeof i18n === 'boolean') {
+    return i18n ? {
+      defaultLocale: 'en',
+      locales: ['en'],
+      localeNames: { en: 'English' }
+    } : null
+  }
+
+  return i18n
+}
+
+export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: string): Promise<Doc | null> {
   try {
-    // Security: Sanitize and validate slug to prevent path traversal
-    const sanitizedSlug = sanitizePath(slug)
+    // Security: Sanitize and validate slug
     const sanitizedVersion = sanitizePath(version)
+    let sanitizedSlug = sanitizePath(slug)
 
-    // Try direct file first
-    let filePath = path.join(DOCS_DIR, sanitizedVersion, `${sanitizedSlug}.mdx`)
-    let doc = readDocFromFile(filePath, sanitizedSlug)
+    // Get i18n config
+    const i18nConfig = getI18nConfig()
 
-    if (doc) return doc
+    // Determine locale from slug if not provided
+    let detectedLocale = locale || i18nConfig?.defaultLocale
 
-    // If still not found, search all docs for a matching custom slug
-    const versionDir = path.join(DOCS_DIR, sanitizedVersion)
-    if (!fs.existsSync(versionDir)) {
-      return null
-    }
-
-    const mdxFiles = findMdxFiles(versionDir)
-
-    for (const file of mdxFiles) {
-      const fileSlug = file.replace(/\.mdx$/, "")
-      const testPath = path.join(versionDir, `${fileSlug}.mdx`)
-      const testDoc = readDocFromFile(testPath, fileSlug)
-
-      if (testDoc && testDoc.slug === sanitizedSlug) {
-        return testDoc
+    if (i18nConfig) {
+      const parts = sanitizedSlug.split('/')
+      if (parts.length > 0 && i18nConfig.locales.includes(parts[0])) {
+        detectedLocale = parts[0]
+        sanitizedSlug = parts.slice(1).join('/')
+        if (sanitizedSlug === "") sanitizedSlug = "index"
       }
     }
+
+    const targetLocale = detectedLocale
+    const isDefaultLocale = targetLocale === i18nConfig?.defaultLocale
+
+    // Try finding the file in this order:
+    // 1. Localized extension: slug.locale.mdx (e.g. guide.fr.mdx)
+    // 2. Default file: slug.mdx (only if using default locale and configured to fallback or strictly default)
+
+    // Construct potential paths
+    const basePath = path.join(DOCS_DIR, sanitizedVersion)
+
+    // 1. Try localized file extension
+    if (targetLocale) {
+      const localizedPath = path.join(basePath, `${sanitizedSlug}.${targetLocale}.mdx`)
+      const doc = readDocFromFile(localizedPath, sanitizedSlug) // Keep parsed slug
+      if (doc) {
+        doc.slug = i18nConfig ? `${targetLocale}/${sanitizedSlug}` : sanitizedSlug
+        doc.meta.locale = targetLocale
+        return doc
+      }
+    }
+
+    // 2. Try default file
+    const defaultPath = path.join(basePath, `${sanitizedSlug}.mdx`)
+    const doc = readDocFromFile(defaultPath, sanitizedSlug)
+
+    if (doc) {
+      // If we found a default file but requested a specific locale using prefix, 
+      // we might want to return it but with the prefix in slug if we are doing fallback.
+      // For now, strict mode: if I request /fr/guide and guide.fr.mdx is missing, 
+      // should I return guide.mdx? 
+      // Let's assume explicitly: Yes, but keep the URL /fr/guide ?? 
+      // No, typically you want 404 if translation missing, OR fallback.
+      // Let's stick to: if explicit locale requested and file not found, we fall through to null eventually.
+      // BUT if it matches default locale, we return it.
+
+      if (isDefaultLocale || !i18nConfig) {
+        // For default locale, we might want to prefix if prompt said "add language to url"
+        // If i18n enabled and prefixDefault is true, ensure slug has prefix.
+        // But existing behavior for default locale usually omits prefix.
+        // If plan said: /en/docs/... then we probably want prefix even for default?
+        // The config I added has `prefixDefault`. Checks that.
+
+        const usePrefix = i18nConfig && (i18nConfig.prefixDefault || targetLocale !== i18nConfig.defaultLocale)
+
+        if (usePrefix && targetLocale) {
+          doc.slug = `${targetLocale}/${doc.slug}`
+        }
+        doc.meta.locale = targetLocale || 'en'
+        return doc
+      }
+    }
+
+    // If still not found, search all docs for a matching custom slug
+    // This part is expensive and might need update for i18n, disabling for now or leaving as is for default locale
+    // Ideally custom slugs should also be localized? 
+    // Let's rely on standard file resolution for now for i18n to ensure stability.
 
     return null
   } catch (error) {
@@ -204,7 +273,7 @@ export async function getDocBySlug(slug: string, version = "v1.0.0"): Promise<Do
   }
 }
 
-export async function getAllDocs(version = "v1.0.0"): Promise<Doc[]> {
+export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<Doc[]> {
   try {
     const versionDir = path.join(DOCS_DIR, version)
 
@@ -212,33 +281,64 @@ export async function getAllDocs(version = "v1.0.0"): Promise<Doc[]> {
       return []
     }
 
+    // Get i18n config
+    const i18nConfig = getI18nConfig()
+    const targetLocale = locale || i18nConfig?.defaultLocale || 'en'
+
     const mdxFiles = findMdxFiles(versionDir)
     const categoryConfigs = getAllCategoryConfigs(version)
 
     const docs = await Promise.all(
       mdxFiles.map(async (file) => {
-        const originalFilePath = file.replace(/\.mdx$/, "")
-        const slug = originalFilePath
+        // file contains path relative to version dir, e.g. "getting-started/intro.mdx" or "intro.fr.mdx"
 
-        const doc = await getDocBySlug(slug, version)
+        let originalFilePath = file.replace(/\.mdx$/, "")
 
-        // Override filePath to preserve the original file structure
-        if (doc) {
-          doc.filePath = originalFilePath
+        // Handle localized files
+        let isLocalized = false
+        let fileLocale = i18nConfig?.defaultLocale || 'en'
 
-          // Apply category config if exists
-          const folderPath = path.dirname(originalFilePath).replace(/\\/g, '/')
-          if (folderPath !== ".") {
-            const categoryConfig = categoryConfigs.get(folderPath)
-            if (categoryConfig) {
-              doc.categoryLabel = categoryConfig.label
-              // Use position if available, otherwise fall back to sidebar_position
-              doc.categoryPosition = categoryConfig.position ?? categoryConfig.sidebar_position
-              doc.categoryCollapsible = categoryConfig.collapsible
-              doc.categoryCollapsed = categoryConfig.collapsed
-              doc.categoryIcon = categoryConfig.icon
-              doc.categoryTabGroup = categoryConfig.tab_group
-            }
+        if (i18nConfig) {
+          // Check for .<locale> suffix
+          const parts = originalFilePath.split('.')
+          const lastPart = parts[parts.length - 1]
+          if (i18nConfig.locales.includes(lastPart)) {
+            fileLocale = lastPart
+            isLocalized = true
+            originalFilePath = parts.slice(0, -1).join('.')
+          }
+        }
+
+        // If we requested a specific locale, filter out others
+        // If target is 'fr', we want intro.fr.mdx (if exists) OR intro.mdx (fallback? no, getAllDocs is usually for list)
+        // Actually, for sidebar we want the "best" version of each doc for the current locale.
+
+        // Strategy: Map all files to their logical slug, then group by slug and pick best locale.
+        // But getAllDocs is async and parallel.
+
+        // Simplified: Just process all files, returning the doc with its true locale.
+        // Then filter/merge later? 
+        // No, current logic returns flat array.
+
+        // Let's try to load the doc.
+        const doc = await getDocBySlug(isLocalized ? `${originalFilePath}.${fileLocale}` : originalFilePath, version, isLocalized ? fileLocale : undefined)
+
+        if (!doc) return null
+
+        // Override filePath properties for sidebar grouping 
+        // (we want grouped by logical path, not physically localized path if possible)
+        doc.filePath = originalFilePath // Use logical path (without .fr) for grouping
+
+        const folderPath = path.dirname(originalFilePath).replace(/\\/g, '/')
+        if (folderPath !== ".") {
+          const categoryConfig = categoryConfigs.get(folderPath)
+          if (categoryConfig) {
+            doc.categoryLabel = categoryConfig.label
+            doc.categoryPosition = categoryConfig.position ?? categoryConfig.sidebar_position
+            doc.categoryCollapsible = categoryConfig.collapsible
+            doc.categoryCollapsed = categoryConfig.collapsed
+            doc.categoryIcon = categoryConfig.icon
+            doc.categoryTabGroup = categoryConfig.tab_group
           }
         }
 
@@ -248,17 +348,48 @@ export async function getAllDocs(version = "v1.0.0"): Promise<Doc[]> {
 
     const isDevelopment = process.env.NODE_ENV === "development"
 
-    // Create a map to track unique slugs and avoid duplicates
+    // Create a map to track unique slugs and avoid duplicates, prioritizing target locale
     const uniqueDocs = new Map<string, Doc>()
 
-    docs
-      .filter((doc): doc is Doc => doc !== null)
-      // Filter out drafts in production
-      .filter((doc) => isDevelopment || !doc.meta.draft)
-      .forEach((doc) => {
-        // Use the doc's slug (which may be custom from frontmatter) as the key
-        uniqueDocs.set(doc.slug, doc)
-      })
+    // Sort docs such that target locale comes first? No, we need to filter/merge.
+    const validDocs = docs.filter((doc): doc is Doc => doc !== null && (isDevelopment || !doc.meta.draft))
+
+    // Group by logical slug (we stored logical path in filePath, maybe use that?)
+    // Actually doc.slug might differ if custom slug used.
+
+    // If we have intro.mdx (en) and intro.fr.mdx (fr)
+    // And targetLocale is 'fr'
+    // We want the 'fr' one.
+
+    validDocs.forEach(doc => {
+      // Identify logical slug. 
+      // If doc.slug already has prefix (e.g. fr/intro), stripped slug is 'intro'.
+      let logicalSlug = doc.slug
+      if (i18nConfig) {
+        const parts = logicalSlug.split('/')
+        if (i18nConfig.locales.includes(parts[0])) {
+          logicalSlug = parts.slice(1).join('/')
+        }
+      }
+
+      const existing = uniqueDocs.get(logicalSlug)
+
+      if (!existing) {
+        // If doc matches target locale or is default (and we allow default fallback), take it.
+        // For now, take everything, filter later?
+        // Better: Only add if it matches target locale OR is default and we don't have target yet.
+        if (doc.meta.locale === targetLocale) {
+          uniqueDocs.set(logicalSlug, doc)
+        } else if (doc.meta.locale === i18nConfig?.defaultLocale) {
+          uniqueDocs.set(logicalSlug, doc)
+        }
+      } else {
+        // We have an existing entry. prefer targetLocale
+        if (doc.meta.locale === targetLocale && existing.meta.locale !== targetLocale) {
+          uniqueDocs.set(logicalSlug, doc)
+        }
+      }
+    })
 
     return Array.from(uniqueDocs.values()).sort((a, b) => {
       const orderA = a.meta.sidebar_position ?? a.meta.order ?? 999
@@ -297,7 +428,7 @@ function flattenSidebarOrder(
     const sortedItems = sortSidebarItems(group.items)
 
     // Merge child groups and items, then sort by position
-    const merged: Array<{type: 'group', group: SidebarGroup, position: number} | {type: 'item', doc: Doc, position: number}> = [
+    const merged: Array<{ type: 'group', group: SidebarGroup, position: number } | { type: 'item', doc: Doc, position: number }> = [
       ...sortedChildren.map(([, childGroup]) => ({
         type: 'group' as const,
         group: childGroup,

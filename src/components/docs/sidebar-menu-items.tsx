@@ -59,14 +59,14 @@ export function SidebarMenuItems({ docs, version, onLinkClick, config, activeTab
   const hasTabGroups = config.navigation?.tabGroups && config.navigation.tabGroups.length > 0
   const filteredDocs = hasTabGroups && activeTabGroup
     ? docs.filter((doc) => {
-        const docTabGroup = doc.meta?.tab_group || doc.categoryTabGroup
+      const docTabGroup = doc.meta?.tab_group || doc.categoryTabGroup
 
-        if (!docTabGroup) {
-          return activeTabGroup === config.navigation?.tabGroups?.[0]?.id
-        }
+      if (!docTabGroup) {
+        return activeTabGroup === config.navigation?.tabGroups?.[0]?.id
+      }
 
-        return docTabGroup === activeTabGroup
-      })
+      return docTabGroup === activeTabGroup
+    })
     : docs
 
   // Build a hierarchical tree structure
@@ -171,7 +171,24 @@ export function SidebarMenuItems({ docs, version, onLinkClick, config, activeTab
     const isGroupActive = pathname === `/docs/${version}/${group.path}`
     const isCollapsed = hasActiveItem || isGroupActive ? false : (collapsed[groupKey] ?? group.defaultCollapsed)
     const marginLeft = depth > 0 ? "ml-4" : ""
-    const groupHref = `/docs/${version}/${group.path}`
+
+    // Calculate groupHref with locale if needed
+    let groupHref = `/docs/${version}/${group.path}`
+
+    // Check for locale in pathname to preserve it in group links
+    if (config.features?.i18n) {
+      const i18n = config.features.i18n
+      const locales = typeof i18n === 'object' ? i18n.locales : ['en']
+      // pathname is /docs/v1.0.0/[locale]/... or /docs/v1.0.0/...
+      const pathParts = pathname?.split('/') || []
+      const potentialLocale = pathParts[3] // /docs/v/locale/...
+
+      if (potentialLocale && locales.includes(potentialLocale)) {
+        // If current path has locale, ensure group path includes it
+        // group.path comes from logical file path (no locale)
+        groupHref = `/docs/${version}/${potentialLocale}/${group.path}`
+      }
+    }
 
     return (
       <div key={`group-${groupKey}`} className={`space-y-1 ${marginLeft}`}>
@@ -183,8 +200,8 @@ export function SidebarMenuItems({ docs, version, onLinkClick, config, activeTab
               toggleSection(groupKey)
             }}
             className={`flex items-center gap-2 flex-1 px-3 py-2 text-sm font-semibold rounded-l-xl transition-all ${isGroupActive
-                ? "bg-primary/10 text-primary"
-                : "text-foreground hover:bg-accent/50"
+              ? "bg-primary/10 text-primary"
+              : "text-foreground hover:bg-accent/50"
               }`}
           >
             {group.icon ? (
@@ -217,7 +234,7 @@ export function SidebarMenuItems({ docs, version, onLinkClick, config, activeTab
         {!isCollapsed && hasContent && (
           <div className="ml-4 space-y-1">
             {(() => {
-              const merged: Array<{type: 'group', key: string, group: SidebarGroup, position: number} | {type: 'item', doc: DocItem, position: number}> = [
+              const merged: Array<{ type: 'group', key: string, group: SidebarGroup, position: number } | { type: 'item', doc: DocItem, position: number }> = [
                 ...sortedChildren.map(([childKey, childGroup]) => ({
                   type: 'group' as const,
                   key: childKey,

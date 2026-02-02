@@ -171,7 +171,7 @@ function readDocFromFile(filePath: string, originalSlug: string): Doc | null {
   }
 }
 
-function getI18nConfig(): I18nConfig | null {
+export function getI18nConfig(): I18nConfig | null {
   const config = getConfig()
   const i18n = config.features?.i18n
 
@@ -362,6 +362,12 @@ export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<D
     // We want the 'fr' one.
 
     validDocs.forEach(doc => {
+      // If we want all docs (e.g. for static params generation), return everything unique by slug
+      if (locale === 'all') {
+        uniqueDocs.set(doc.slug, doc)
+        return
+      }
+
       // Identify logical slug. 
       // If doc.slug already has prefix (e.g. fr/intro), stripped slug is 'intro'.
       let logicalSlug = doc.slug

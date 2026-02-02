@@ -116,22 +116,23 @@ export function getCachedVersions(): string[] {
 /**
  * Cached version of getAllDocs()
  */
-export async function getCachedAllDocs(version = 'v1.0.0'): Promise<Doc[]> {
+export async function getCachedAllDocs(version = 'v1.0.0', locale?: string): Promise<Doc[]> {
   // Initialize watchers on first use
   initializeWatchers()
 
-  const cached = allDocsCache.get(version)
+  const cacheKey = locale ? `${version}:${locale}` : version
+  const cached = allDocsCache.get(cacheKey)
   if (cached && isCacheValid(cached.timestamp)) {
-    logCacheOperation('hit', `getAllDocs:${version}`)
+    logCacheOperation('hit', `getAllDocs:${cacheKey}`)
     return cached.data
   }
 
-  logCacheOperation('miss', `getAllDocs:${version}`)
-  const timer = new PerfTimer(`getAllDocs(${version})`)
-  const docs = await getAllDocs(version)
+  logCacheOperation('miss', `getAllDocs:${cacheKey}`)
+  const timer = new PerfTimer(`getAllDocs(${cacheKey})`)
+  const docs = await getAllDocs(version, locale)
   timer.end()
 
-  allDocsCache.set(version, {
+  allDocsCache.set(cacheKey, {
     data: docs,
     timestamp: Date.now(),
   })

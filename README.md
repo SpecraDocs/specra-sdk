@@ -145,13 +145,25 @@ npm update specra
 
 Your content and configuration stay the same - only the SDK updates!
 
+## Specra SaaS
+
+The official documentation site ([specra-docs](https://specra-docs.com)) also serves as a SaaS platform with paid tiers (Starter, Pro, Enterprise). It includes:
+- Authentication (Auth.js v5 with GitHub OAuth + email/password)
+- Subscription billing via Stripe (USD) and M-Pesa Daraja (KES)
+- User dashboard with plan management and billing history
+- PostgreSQL database via Prisma v7
+
+The SaaS layer is implemented entirely within specra-docs and does not affect the SDK itself. Users of the SDK can build free, self-hosted documentation sites without any billing features.
+
 ## Why Specra?
 
 Specra is designed to be the easiest way to create documentation for your projects. It handles all the complex parts (versioning, search, API references) while letting you focus on writing great content.
 
 ## License
 
-MIT
+MIT with Branding Requirement — see [LICENSE.MD](LICENSE.MD).
+
+All documentation sites built with Specra must display the "Powered by Specra" watermark. Removing the watermark requires an active paid subscription (Starter tier or above) at [specra-docs.com](https://specra-docs.com). Unauthorized removal of the watermark is a copyright violation.
 
 ## Authors
 

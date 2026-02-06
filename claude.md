@@ -26,10 +26,12 @@ This SDK is part of a three-project ecosystem:
    - CLI that generates new documentation projects
    - Pre-configures Next.js with Specra SDK
 
-3. **specra-docs** - The documentation site
+3. **specra-docs** - The documentation site + SaaS platform
    - Uses Specra to document itself (dogfooding)
    - Serves as both documentation and reference implementation
-   - Hosted at https://specra.vercel.app
+   - Includes SaaS billing: Auth.js v5, Stripe, M-Pesa Daraja, Prisma v7 + PostgreSQL
+   - 4 pricing tiers (Free, Starter, Pro, Enterprise)
+   - Hosted at https://specra-docs.com (self-hosted with Caddy reverse proxy)
 
 ## Architecture Overview
 

@@ -67,7 +67,10 @@ Primary config file: specra.config.json
 
 ## Relationship to Other Projects
 - **specra-cli (create-specra)**: CLI tool that scaffolds new projects using this SDK
-- **specra-docs**: Reference implementation and documentation site built with this SDK
+- **specra-docs**: Reference implementation, documentation site, and SaaS platform built with this SDK
+  - Includes payment system: Auth.js v5, Stripe (USD), M-Pesa Daraja (KES), Prisma v7 + PostgreSQL
+  - 4 pricing tiers (Free, Starter $19/mo, Pro $49/mo, Enterprise $149/mo)
+  - The SaaS layer is in specra-docs only — the SDK itself has no billing dependencies
 
 ## Installation
 npm install specra

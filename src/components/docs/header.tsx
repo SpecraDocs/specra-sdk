@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Search, Menu, Github, Twitter, MessageCircle } from "lucide-react"
+import { Search, Menu, Github, Twitter, MessageCircle, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VersionSwitcher } from "./version-switcher"
 import { LanguageSwitcher } from "./language-switcher"
@@ -105,7 +105,7 @@ export function Header({ currentVersion, versions, onMenuClick, config: configPr
               className="hidden md:flex items-center justify-center h-9 w-9 rounded-md hover:bg-muted transition-colors"
               aria-label="Twitter"
             >
-              <Twitter className="h-4 w-4" />
+              <XIcon className="h-4 w-4" />
             </a>
           )}
           {config.social?.discord && (

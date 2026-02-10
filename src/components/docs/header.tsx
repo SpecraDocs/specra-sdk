@@ -52,7 +52,7 @@ export function Header({ currentVersion, versions, onMenuClick, config: configPr
           <Link href="/" className="flex items-center gap-2">
             {!config.site.hideLogo && (
               config.site.logo ? (
-                <Logo logo={config.site.logo} alt={config.site.title} className="w-18 object-contain" />
+                <Logo logo={config.site.logo} alt={config.site.title} className="h-12 w-auto object-contain" />
               ) : (
                 <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
                   <span className="text-primary-foreground font-bold text-lg">

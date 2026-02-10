@@ -1,6 +1,6 @@
 {
   "name": "specra",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "A modern documentation library for Next.js with built-in versioning, API reference generation, full-text search, and MDX support",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -120,7 +120,7 @@
     "katex": "^0.16.27",
     "lucide-react": "^0.454.0",
     "meilisearch": "^0.54.0",
-    "mermaid": "^11.12.2",
+    "mermaid": "^10.9.5",
     "next-mdx-remote": "^5.0.0",
     "next-themes": "^0.4.6",
     "react-hook-form": "^7.60.0",

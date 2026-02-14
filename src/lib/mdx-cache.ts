@@ -7,7 +7,8 @@
  */
 
 // Note: This file uses server-only APIs (fs, path) and should only be imported in Server Components
-import { Doc, getVersions, getAllDocs, getDocBySlug } from './mdx'
+import type { Doc } from './mdx'
+import { getVersions, getAllDocs, getDocBySlug } from './mdx'
 import { watch } from 'fs'
 import { join } from 'path'
 import { PerfTimer, logCacheOperation } from './dev-utils'
@@ -116,22 +117,23 @@ export function getCachedVersions(): string[] {
 /**
  * Cached version of getAllDocs()
  */
-export async function getCachedAllDocs(version = 'v1.0.0'): Promise<Doc[]> {
+export async function getCachedAllDocs(version = 'v1.0.0', locale?: string): Promise<Doc[]> {
   // Initialize watchers on first use
   initializeWatchers()
 
-  const cached = allDocsCache.get(version)
+  const cacheKey = locale ? `${version}:${locale}` : version
+  const cached = allDocsCache.get(cacheKey)
   if (cached && isCacheValid(cached.timestamp)) {
-    logCacheOperation('hit', `getAllDocs:${version}`)
+    logCacheOperation('hit', `getAllDocs:${cacheKey}`)
     return cached.data
   }
 
-  logCacheOperation('miss', `getAllDocs:${version}`)
-  const timer = new PerfTimer(`getAllDocs(${version})`)
-  const docs = await getAllDocs(version)
+  logCacheOperation('miss', `getAllDocs:${cacheKey}`)
+  const timer = new PerfTimer(`getAllDocs(${cacheKey})`)
+  const docs = await getAllDocs(version, locale)
   timer.end()
 
-  allDocsCache.set(version, {
+  allDocsCache.set(cacheKey, {
     data: docs,
     timestamp: Date.now(),
   })

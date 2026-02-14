@@ -7,5 +7,6 @@ export * from './ui/index.js';
 // Global components
 export * from './global/index.js';
 
-// Provider
+// Providers
 export { default as ConfigProvider } from './ConfigProvider.svelte';
+export { default as LayoutProviders } from './docs/LayoutProviders.svelte';

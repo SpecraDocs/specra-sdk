@@ -5,7 +5,7 @@ import { getAllCategoryConfigs } from "./category"
 import { sortSidebarItems, sortSidebarGroups, buildSidebarStructure, type SidebarGroup } from "./sidebar-utils"
 import { sanitizePath, validatePathWithinDirectory, validateMDXSecurity } from "./mdx-security"
 import { getConfig } from "./config"
-import { I18nConfig } from "./config.types"
+import type { I18nConfig } from "./config.types"
 
 const DOCS_DIR = path.join(process.cwd(), "docs")
 
@@ -171,7 +171,7 @@ function readDocFromFile(filePath: string, originalSlug: string): Doc | null {
   }
 }
 
-function getI18nConfig(): I18nConfig | null {
+export function getI18nConfig(): I18nConfig | null {
   const config = getConfig()
   const i18n = config.features?.i18n
 

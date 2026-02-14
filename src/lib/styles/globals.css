@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@plugin "@tailwindcss/typography";
 @import "katex/dist/katex.min.css";
+@plugin "@tailwindcss/typography";
 
 /* Scan SDK source files for Tailwind utilities */
 @source "../**/*.{js,ts,svelte}";

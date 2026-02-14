@@ -1,4 +1,5 @@
-import { SpecraConfig, defaultConfig } from "./config.types"
+import type { SpecraConfig } from "./config.types"
+import { defaultConfig } from "./config.types"
 
 /**
  * Deep merge two objects

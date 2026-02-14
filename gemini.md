@@ -1,12 +1,12 @@
 # Specra SDK - Gemini Developer Guide
 
 ## Overview
-Welcome! This guide will help you understand and contribute to the Specra SDK. Specra is a modern, full-featured documentation framework built for Next.js applications.
+Welcome! This guide will help you understand and contribute to the Specra SDK. Specra is a modern, full-featured documentation framework built for SvelteKit applications.
 
 ## What is Specra?
 
 ### Purpose
-Specra is an npm package that transforms Next.js applications into powerful documentation sites with minimal setup. It provides:
+Specra is an npm package that transforms SvelteKit applications into powerful documentation sites with minimal setup. It provides:
 - **Content Management**: MDX-based authoring with React component integration
 - **Version Control**: Multi-version documentation support
 - **API Documentation**: Auto-generation from OpenAPI, Postman, and custom formats
@@ -30,17 +30,17 @@ Specra consists of three interconnected projects:
 ### Technology Stack
 ```
 Foundation:
-├── Next.js 14/15/16 (App Router)
+├── SvelteKit 14/15/16 (App Router)
 ├── React 18/19
 └── TypeScript 5
 
 Styling:
 ├── Tailwind CSS 4
 ├── Radix UI (primitives)
-└── next-themes (theme switching)
+└── mode-watcher (theme switching)
 
 Content:
-├── MDX (next-mdx-remote)
+├── MDX (mdsvex)
 ├── gray-matter (frontmatter)
 ├── remark plugins (GFM, math)
 └── rehype plugins (KaTeX, slug generation)
@@ -59,7 +59,7 @@ Build:
 ```
 specra-sdk/
 ├── src/
-│   ├── app/                    # Next.js App Router integration
+│   ├── app/                    # SvelteKit App Router integration
 │   │   ├── layout.tsx          # Root layout (theme provider, metadata)
 │   │   ├── docs-page.tsx       # Dynamic docs page component
 │   │   └── api/mdx-watch/      # Hot reload API endpoint
@@ -84,16 +84,16 @@ specra-sdk/
 │   │       ├── postman.ts
 │   │       └── specra.ts
 │   │
-│   ├── middleware/             # Next.js middleware
+│   ├── middleware/             # SvelteKit middleware
 │   │   └── security.ts         # Security headers
 │   │
 │   ├── mdx-components.tsx      # MDX component mappings
 │   └── index.ts                # Main package entry
 │
-├── config/                     # Next.js config presets
-│   ├── next-config.mjs         # Base config helper
-│   ├── next.config.default.mjs # Default deployment
-│   └── next.config.export.mjs  # Static export
+├── config/                     # SvelteKit config presets
+│   ├── svelte-config.js         # Base config helper
+│   ├── svelte-config.js # Default deployment
+│   └── svelte-config.js  # Static export
 │
 ├── dist/                       # Build output (generated)
 │   ├── *.js                    # CommonJS
@@ -148,7 +148,7 @@ The package.json `exports` field defines multiple entry points:
     "./layouts": "./dist/layouts/index.js",      // Layouts
     "./lib": "./dist/lib/index.js",             // Utilities
     "./middleware/security": "./dist/middleware/security.js",
-    "./next-config": "./config/next-config.mjs", // Config helper
+    "./next-config": "./config/svelte-config.js", // Config helper
     "./styles": "./dist/styles.css"              // Styles
   }
 }
@@ -300,7 +300,7 @@ Custom components display API information:
 
 ### 6. Theme System
 
-**Implementation**: `next-themes` library
+**Implementation**: `mode-watcher` library
 
 **Features**:
 - Light/dark mode toggle
@@ -509,12 +509,12 @@ import { something } from 'specra/new-feature'
 
 ### Peer Dependencies
 Must be installed by consumers:
-- `next`: Framework compatibility
+- `svelte`: Framework compatibility
 - `react`, `react-dom`: UI library
 
 ### Runtime Dependencies
 Shipped with package, key ones:
-- `next-mdx-remote`: MDX processing
+- `mdsvex`: MDX processing
 - `radix-ui/*`: UI primitives
 - `tailwindcss`: Styling
 - `meilisearch`: Search client
@@ -548,7 +548,7 @@ Build-time only:
 **Solution**:
 - Check "use client" directives
 - Verify imports from correct paths
-- Check Next.js version compatibility
+- Check SvelteKit version compatibility
 
 **Symptom**: Styles not applied
 **Solution**:
@@ -669,7 +669,7 @@ Documentation should:
 - **Docs**: https://github.com/dalmasonto/specra-docs
 
 ### External Documentation
-- **Next.js App Router**: https://nextjs.org/docs/app
+- **SvelteKit App Router**: https://svelte.dev/docs/app
 - **MDX**: https://mdxjs.com
 - **Tailwind CSS**: https://tailwindcss.com
 - **Radix UI**: https://www.radix-ui.com

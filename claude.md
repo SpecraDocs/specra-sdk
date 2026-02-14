@@ -1,12 +1,12 @@
 # Specra SDK - Claude Developer Guide
 
 ## Introduction
-Hello Claude! This document is designed to help you understand and work with the Specra SDK. Specra is a modern documentation framework for Next.js that makes it easy to create beautiful, searchable, and feature-rich documentation sites.
+Hello Claude! This document is designed to help you understand and work with the Specra SDK. Specra is a modern documentation framework for SvelteKit that makes it easy to create beautiful, searchable, and feature-rich documentation sites.
 
 ## Project Context
 
 ### What is Specra?
-Specra is a comprehensive documentation library that sits on top of Next.js, providing out-of-the-box features that would typically require significant custom development:
+Specra is a comprehensive documentation library that sits on top of SvelteKit, providing out-of-the-box features that would typically require significant custom development:
 - MDX-based content authoring
 - Multi-version documentation support
 - API reference generation from OpenAPI, Postman, or custom formats
@@ -18,13 +18,13 @@ This SDK is part of a three-project ecosystem:
 
 1. **specra-sdk** (this project) - The core library
    - Published as `specra` on npm
-   - Provides all the components, utilities, and Next.js integration
+   - Provides all the components, utilities, and SvelteKit integration
    - Used as a dependency by documentation sites
 
 2. **specra-cli** (create-specra) - The scaffolding tool
    - Published as `create-specra` on npm
    - CLI that generates new documentation projects
-   - Pre-configures Next.js with Specra SDK
+   - Pre-configures SvelteKit with Specra SDK
 
 3. **specra-docs** - The documentation site + SaaS platform
    - Uses Specra to document itself (dogfooding)
@@ -39,7 +39,7 @@ This SDK is part of a three-project ecosystem:
 ```
 specra-sdk/
 ├── src/
-│   ├── app/              # Next.js App Router components
+│   ├── app/              # SvelteKit App Router components
 │   │   ├── layout.tsx    # Root layout with theme provider
 │   │   └── docs-page.tsx # Dynamic docs page component
 │   ├── components/       # UI components
@@ -51,13 +51,13 @@ specra-sdk/
 │   │   ├── api.types.ts         # API types
 │   │   ├── mdx.ts              # MDX processing
 │   │   └── parsers/            # API format parsers
-│   ├── middleware/       # Next.js middleware
+│   ├── middleware/       # SvelteKit middleware
 │   │   └── security.ts   # Security headers
 │   └── mdx-components.tsx # MDX component mappings
-├── config/               # Next.js config presets
-│   ├── next-config.mjs
-│   ├── next.config.default.mjs
-│   └── next.config.export.mjs
+├── config/               # SvelteKit config presets
+│   ├── svelte-config.js
+│   ├── svelte-config.js
+│   └── svelte-config.js
 ├── package.json
 ├── tsconfig.json
 └── tsup.config.ts       # Build configuration
@@ -80,7 +80,7 @@ export { default } from 'specra/app/docs-page'
 import 'specra/styles'
 
 // Configuration helpers
-import withSpecra from 'specra/next-config'
+import withSpecra from 'specra/svelte-config'
 ```
 
 ### Build Process
@@ -246,16 +246,16 @@ Or use specra-docs as a test bed since it uses this SDK.
 ## Dependencies to Know
 
 ### Peer Dependencies (Required by Consumer)
-- next: ^14.0.0 || ^15.0.0 || ^16.0.0
+- svelte: ^5.0.0
 - react: ^18.0.0 || ^19.0.0
 - react-dom: ^18.0.0 || ^19.0.0
 
 ### Key Runtime Dependencies
-- **next-mdx-remote**: MDX processing
+- **mdsvex**: MDX processing
 - **gray-matter**: Frontmatter parsing
 - **meilisearch**: Search functionality
 - **radix-ui**: UI primitives
-- **next-themes**: Theme management
+- **mode-watcher**: Theme management
 - **tailwindcss**: Styling framework
 - **zod**: Schema validation
 - **rehype/remark plugins**: Content transformation
@@ -321,7 +321,7 @@ Or use specra-docs as a test bed since it uses this SDK.
 
 ### For Styling
 1. Use Tailwind CSS classes
-2. Support dark mode via next-themes
+2. Support dark mode via mode-watcher
 3. Ensure responsive design
 4. Leverage Radix UI for accessibility
 
@@ -338,7 +338,7 @@ Or use specra-docs as a test bed since it uses this SDK.
 - Verify exports in package.json match actual files
 
 ### Runtime Issues
-- Check Next.js version compatibility
+- Check SvelteKit version compatibility
 - Verify client/server component boundaries
 - Check middleware configuration
 
@@ -361,7 +361,7 @@ When working with this codebase, ask yourself:
 - Does the configuration schema need updating?
 - Should this be documented in specra-docs?
 - Does this affect specra-cli templates?
-- Is this change compatible with all supported Next.js versions?
+- Is this change compatible with all supported SvelteKit versions?
 
 ## Resources
 - GitHub: https://github.com/dalmasonto/specra

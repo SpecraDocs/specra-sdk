@@ -1,0 +1,149 @@
+import { SpecraConfig, defaultConfig } from "./config.types";
+/**
+ * Deep merge two objects
+ */
+function deepMerge(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+        const sourceValue = source[key];
+        const targetValue = result[key];
+        if (sourceValue && typeof sourceValue === "object" && !Array.isArray(sourceValue)) {
+            result[key] = deepMerge(targetValue && typeof targetValue === "object" ? targetValue : {}, sourceValue);
+        }
+        else if (sourceValue !== undefined) {
+            result[key] = sourceValue;
+        }
+    }
+    return result;
+}
+/**
+ * Load and parse the Specra configuration file
+ * Falls back to default configuration if file doesn't exist or is invalid
+ */
+export function loadConfig(userConfig) {
+    try {
+        // const userConfig = specraConfigJson as unknown as Partial<SpecraConfig>
+        // Merge user config with defaults  
+        const config = deepMerge(defaultConfig, userConfig);
+        return config;
+    }
+    catch (error) {
+        console.error(`❌ Error loading configuration:`, error);
+        console.warn("Using default configuration.");
+        return defaultConfig;
+    }
+}
+/**
+ * Get a specific configuration value by path (SERVER ONLY)
+ * Example: getConfigValue('site.title') or getConfigValue('theme.defaultMode')
+ */
+export function getConfigValue(path, config) {
+    const cfg = config || loadConfig({});
+    const keys = path.split(".");
+    let value = cfg;
+    for (const key of keys) {
+        if (value && typeof value === "object" && key in value) {
+            value = value[key];
+        }
+        else {
+            return undefined;
+        }
+    }
+    return value;
+}
+/**
+ * Replace environment variables in a string (SERVER ONLY)
+ * Supports ${ENV_VAR} and {{ENV_VAR}} syntax
+ */
+export function replaceEnvVariables(text, config) {
+    const cfg = config || loadConfig({});
+    const envVars = cfg.env || {};
+    let result = text;
+    // Replace ${VAR} syntax
+    result = result.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+        return envVars[varName] || match;
+    });
+    // Replace {{VAR}} syntax
+    result = result.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+        return envVars[varName] || match;
+    });
+    return result;
+}
+/**
+ * Process content and replace all environment variables (SERVER ONLY)
+ */
+export function processContentWithEnv(content, config) {
+    return replaceEnvVariables(content, config);
+}
+/**
+ * Validate configuration (basic validation) (SERVER ONLY)
+ */
+export function validateConfig(config) {
+    const errors = [];
+    // Required fields
+    if (!config.site?.title) {
+        errors.push("site.title is required");
+    }
+    // URL validation
+    if (config.site?.url) {
+        try {
+            new URL(config.site.url);
+        }
+        catch {
+            errors.push("site.url must be a valid URL");
+        }
+    }
+    // Social links validation
+    if (config.social) {
+        const socialKeys = ["github", "twitter", "discord", "linkedin", "youtube"];
+        for (const key of socialKeys) {
+            const url = config.social[key];
+            if (url) {
+                try {
+                    new URL(url);
+                }
+                catch {
+                    errors.push(`social.${key} must be a valid URL`);
+                }
+            }
+        }
+    }
+    return {
+        valid: errors.length === 0,
+        errors,
+    };
+}
+// Singleton instance
+let configInstance = null;
+/**
+ * Initialize the Specra configuration
+ * Can be called multiple times - subsequent calls will update the config
+ * @param userConfig - Partial configuration to merge with defaults
+ * @returns The initialized configuration
+ */
+export function initConfig(userConfig) {
+    configInstance = loadConfig(userConfig);
+    return configInstance;
+}
+/**
+ * Get the configuration instance (cached) (SERVER ONLY)
+ * If not initialized, returns default config
+ */
+export function getConfig() {
+    if (!configInstance) {
+        // Auto-initialize with defaults if not already initialized
+        configInstance = loadConfig({});
+    }
+    return configInstance;
+}
+/**
+ * Reload the configuration (useful for development) (SERVER ONLY)
+ */
+export function reloadConfig(userConfig) {
+    configInstance = loadConfig(userConfig);
+    return configInstance;
+}
+/**
+ * Export the loaded config as default (SERVER ONLY)
+ */
+// export default getConfig()

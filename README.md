@@ -1,20 +1,20 @@
 # Specra
 
-A modern documentation library for Next.js that makes it easy to create beautiful, feature-rich documentation sites.
-To view the docs, visit [Specra Docs](https://specra.vercel.app).
+A modern documentation library for SvelteKit that makes it easy to create beautiful, feature-rich documentation sites.
+To view the docs, visit [Specra Docs](https://specra-docs.com).
 
 ## Features
 
-- 📝 **MDX Support** - Write documentation in Markdown with React components
-- 📚 **Multi-Version Docs** - Support multiple documentation versions seamlessly
-- 🔌 **API Reference Generation** - Auto-generate API docs from OpenAPI, Postman, or Specra formats
-- 🔍 **Full-Text Search** - Integrated MeiliSearch support for fast search
-- 🎯 **Tab Groups** - Organize content into multiple navigation tabs
-- 🌓 **Dark Mode** - Built-in theme switching with system preference detection
-- 🎨 **Customizable** - Highly configurable with Tailwind CSS
-- ⚡ **Fast** - Built on Next.js with optimized performance
-- 📱 **Responsive** - Mobile-friendly design out of the box
-- 🔥 **Hot Reload** - Instant updates during development
+- **MDX Support** - Write documentation in Markdown with Svelte components
+- **Multi-Version Docs** - Support multiple documentation versions seamlessly
+- **API Reference Generation** - Auto-generate API docs from OpenAPI, Postman, or Specra formats
+- **Full-Text Search** - Integrated MeiliSearch support for fast search
+- **Tab Groups** - Organize content into multiple navigation tabs
+- **Dark Mode** - Built-in theme switching with system preference detection
+- **Customizable** - Highly configurable with Tailwind CSS
+- **Fast** - Built on SvelteKit with optimized performance
+- **Responsive** - Mobile-friendly design out of the box
+- **Hot Reload** - Instant updates during development
 
 ## Installation
 
@@ -28,58 +28,47 @@ pnpm add specra
 
 ## Quick Start
 
-### 1. Create a new Next.js app (if you don't have one)
+### 1. Create a new SvelteKit app (if you don't have one)
 
 ```bash
-npx create-next-app@latest my-docs
+npx create-specra my-docs
 cd my-docs
 ```
 
-### 2. Install Specra
+Or manually with SvelteKit:
 
 ```bash
+npx sv create my-docs
+cd my-docs
 npm install specra
 ```
 
-### 3. Set up your app structure
+### 2. Set up your project structure
 
 ```
 my-docs/
-├── app/
-│   ├── layout.tsx          # Re-export from Specra
-│   ├── page.tsx            # Your landing page
-│   └── docs/
-│       └── [version]/
-│           └── [...slug]/
-│               └── page.tsx  # Re-export from Specra
-├── docs/                   # Your MDX content
+├── src/
+│   ├── routes/
+│   │   ├── +layout.svelte       # Root layout with Specra components
+│   │   ├── +layout.ts           # Load config
+│   │   ├── +page.svelte         # Your landing page
+│   │   └── docs/
+│   │       └── [version]/
+│   │           └── [...slug]/
+│   │               ├── +page.svelte   # Doc page
+│   │               └── +page.ts       # Load doc data
+│   └── app.html
+├── docs/                         # Your MDX content
 │   └── v1.0.0/
 │       └── getting-started.mdx
-├── public/
+├── static/
 │   └── logo.png
-└── specra.config.json      # Specra configuration
+├── specra.config.json            # Specra configuration
+├── svelte.config.js
+└── vite.config.ts
 ```
 
-### 4. Configure app/layout.tsx
-
-```typescript
-// app/layout.tsx
-export { default } from 'specra/app/layout'
-export { generateMetadata } from 'specra/app/layout'
-```
-
-### 5. Configure app/docs/[version]/[...slug]/page.tsx
-
-```typescript
-// app/docs/[version]/[...slug]/page.tsx
-export { default } from 'specra/app/docs-page'
-export {
-  generateStaticParams,
-  generateMetadata
-} from 'specra/app/docs-page'
-```
-
-### 6. Create specra.config.json
+### 3. Configure specra.config.json
 
 ```json
 {
@@ -100,7 +89,7 @@ export {
 }
 ```
 
-### 7. Create your first doc
+### 4. Create your first doc
 
 ```mdx
 ---
@@ -113,9 +102,9 @@ description: Learn how to get started with our platform
 Welcome to the documentation!
 ```
 
-### 8. Import globals.css
+### 5. Import globals.css
 
-Add to your `app/globals.css`:
+Add to your root stylesheet:
 
 ```css
 @import 'specra/styles';
@@ -123,17 +112,17 @@ Add to your `app/globals.css`:
 /* Your custom styles */
 ```
 
-### 9. Run development server
+### 6. Run development server
 
 ```bash
 npm run dev
 ```
 
-Visit `http://localhost:3000/docs/v1.0.0/getting-started` to see your docs!
+Visit `http://localhost:5173/docs/v1.0.0/getting-started` to see your docs!
 
 ## Configuration
 
-See [Configuration Guide](https://docs.specra.dev/configuration) for full documentation.
+See [Configuration Guide](https://specra-docs.com/docs) for full documentation.
 
 ## Upgrading
 
@@ -148,7 +137,7 @@ Your content and configuration stay the same - only the SDK updates!
 ## Specra SaaS
 
 The official documentation site ([specra-docs](https://specra-docs.com)) also serves as a SaaS platform with paid tiers (Starter, Pro, Enterprise). It includes:
-- Authentication (Auth.js v5 with GitHub OAuth + email/password)
+- Authentication (Auth.js with GitHub OAuth + email/password)
 - Subscription billing via Stripe (USD) and M-Pesa Daraja (KES)
 - User dashboard with plan management and billing history
 - PostgreSQL database via Prisma v7

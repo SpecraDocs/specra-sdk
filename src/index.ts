@@ -1,8 +1,8 @@
 /**
  * Specra Documentation SDK
  *
- * A modern documentation framework for Next.js with:
- * - MDX-based documentation
+ * A modern documentation framework for SvelteKit with:
+ * - MDX-based documentation (via mdsvex)
  * - Versioning support
  * - API reference generation (OpenAPI, Postman, Specra formats)
  * - Full-text search integration (MeiliSearch)
@@ -11,15 +11,12 @@
  * - SEO optimization
  */
 
-// Core library functions
-export * from './lib'
-
-// React components
-export * from './components'
+// Re-export everything from lib (the SvelteKit package entry point)
+export * from './lib/index.js'
 
 // Types
-export type { SpecraConfig, SiteConfig, NavigationConfig, ThemeConfig } from './lib/config.types'
-export type { Doc, DocMeta, TocItem } from './lib/mdx'
+export type { SpecraConfig, SiteConfig, NavigationConfig, ThemeConfig } from './lib/config.types.js'
+export type { Doc, DocMeta, TocItem } from './lib/mdx.js'
 export type {
   ApiDocumentation,
   ApiSpecConfig,
@@ -29,5 +26,4 @@ export type {
   ApiResponse,
   GraphQLSchema,
   WebSocketConnection
-} from './lib/api.types'
-// Note: SpecraApiResponse is exported from './lib' as a renamed type to avoid conflicts
+} from './lib/api.types.js'

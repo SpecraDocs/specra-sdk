@@ -14,6 +14,36 @@
  * ```
  */
 
+import {
+  Callout,
+  Accordion,
+  AccordionItem,
+  Tabs,
+  Tab,
+  Image,
+  Video,
+  Card,
+  CardGrid,
+  ImageCard,
+  ImageCardGrid,
+  Steps,
+  Step,
+  Icon,
+  Mermaid,
+  Math,
+  Columns,
+  Column,
+  DocBadge,
+  Tooltip,
+  Frame,
+  CodeBlock,
+  ApiEndpoint,
+  ApiParams,
+  ApiResponse,
+  ApiPlayground,
+  ApiReference,
+} from './components/docs'
+
 // Re-export all MDX-usable components
 export {
   Callout,
@@ -43,4 +73,37 @@ export {
   ApiResponse,
   ApiPlayground,
   ApiReference,
-} from './components/docs'
+}
+
+/**
+ * Component map for passing to layout components that render MDX content.
+ */
+export const mdxComponents = {
+  Callout,
+  Accordion,
+  AccordionItem,
+  Tabs,
+  Tab,
+  Image,
+  Video,
+  Card,
+  CardGrid,
+  ImageCard,
+  ImageCardGrid,
+  Steps,
+  Step,
+  Icon,
+  Mermaid,
+  Math,
+  Columns,
+  Column,
+  DocBadge,
+  Tooltip,
+  Frame,
+  CodeBlock,
+  ApiEndpoint,
+  ApiParams,
+  ApiResponse,
+  ApiPlayground,
+  ApiReference,
+}

@@ -1,6 +1,15 @@
 import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
+import { unified } from "unified"
+import remarkParse from "remark-parse"
+import remarkGfm from "remark-gfm"
+import remarkMath from "remark-math"
+import remarkRehype from "remark-rehype"
+import rehypeSlug from "rehype-slug"
+import rehypeRaw from "rehype-raw"
+import rehypeKatex from "rehype-katex"
+import rehypeStringify from "rehype-stringify"
 import { getAllCategoryConfigs } from "./category"
 import { sortSidebarItems, sortSidebarGroups, buildSidebarStructure, type SidebarGroup } from "./sidebar-utils"
 import { sanitizePath, validatePathWithinDirectory, validateMDXSecurity } from "./mdx-security"
@@ -8,6 +17,24 @@ import { getConfig } from "./config"
 import type { I18nConfig } from "./config.types"
 
 const DOCS_DIR = path.join(process.cwd(), "docs")
+
+/**
+ * Process markdown content to HTML using remark/rehype pipeline.
+ */
+async function processMarkdownToHtml(markdown: string): Promise<string> {
+  const result = await unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkMath)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeSlug)
+    .use(rehypeKatex)
+    .use(rehypeStringify)
+    .process(markdown)
+
+  return String(result)
+}
 
 /**
  * Calculate reading time based on word count
@@ -219,61 +246,48 @@ export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: st
     // Construct potential paths
     const basePath = path.join(DOCS_DIR, sanitizedVersion)
 
+    let result: Doc | null = null
+
     // 1. Try localized file extension
     if (targetLocale) {
       const localizedPath = path.join(basePath, `${sanitizedSlug}.${targetLocale}.mdx`)
-      const doc = readDocFromFile(localizedPath, sanitizedSlug) // Keep parsed slug
+      const doc = readDocFromFile(localizedPath, sanitizedSlug)
       if (doc) {
         doc.slug = i18nConfig ? `${targetLocale}/${sanitizedSlug}` : sanitizedSlug
         doc.meta.locale = targetLocale
-        return doc
+        result = doc
       }
     }
 
     // 2. Try default file
-    const defaultPath = path.join(basePath, `${sanitizedSlug}.mdx`)
-    const doc = readDocFromFile(defaultPath, sanitizedSlug)
+    if (!result) {
+      const defaultPath = path.join(basePath, `${sanitizedSlug}.mdx`)
+      const doc = readDocFromFile(defaultPath, sanitizedSlug)
 
-    if (doc) {
-      // If we found a default file but requested a specific locale using prefix, 
-      // we might want to return it but with the prefix in slug if we are doing fallback.
-      // For now, strict mode: if I request /fr/guide and guide.fr.mdx is missing, 
-      // should I return guide.mdx? 
-      // Let's assume explicitly: Yes, but keep the URL /fr/guide ?? 
-      // No, typically you want 404 if translation missing, OR fallback.
-      // Let's stick to: if explicit locale requested and file not found, we fall through to null eventually.
-      // BUT if it matches default locale, we return it.
-
-      if (isDefaultLocale || !i18nConfig) {
-        // For default locale, we might want to prefix if prompt said "add language to url"
-        // If i18n enabled and prefixDefault is true, ensure slug has prefix.
-        // But existing behavior for default locale usually omits prefix.
-        // If plan said: /en/docs/... then we probably want prefix even for default?
-        // The config I added has `prefixDefault`. Checks that.
-
+      if (doc && (isDefaultLocale || !i18nConfig)) {
         const usePrefix = i18nConfig && (i18nConfig.prefixDefault || targetLocale !== i18nConfig.defaultLocale)
 
         if (usePrefix && targetLocale) {
           doc.slug = `${targetLocale}/${doc.slug}`
         }
         doc.meta.locale = targetLocale || 'en'
-        return doc
+        result = doc
       }
     }
 
-    // If still not found, search all docs for a matching custom slug
-    // This part is expensive and might need update for i18n, disabling for now or leaving as is for default locale
-    // Ideally custom slugs should also be localized? 
-    // Let's rely on standard file resolution for now for i18n to ensure stability.
+    // Process markdown to HTML for the found doc
+    if (result) {
+      result.content = await processMarkdownToHtml(result.content)
+    }
 
-    return null
+    return result
   } catch (error) {
     console.error(`Error reading doc ${slug}:`, error)
     return null
   }
 }
 
-export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<Doc[]> {
+export function getAllDocs(version = "v1.0.0", locale?: string): Doc[] {
   try {
     const versionDir = path.join(DOCS_DIR, version)
 
@@ -288,8 +302,7 @@ export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<D
     const mdxFiles = findMdxFiles(versionDir)
     const categoryConfigs = getAllCategoryConfigs(version)
 
-    const docs = await Promise.all(
-      mdxFiles.map(async (file) => {
+    const docs = mdxFiles.map((file) => {
         // file contains path relative to version dir, e.g. "getting-started/intro.mdx" or "intro.fr.mdx"
 
         let originalFilePath = file.replace(/\.mdx$/, "")
@@ -309,23 +322,24 @@ export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<D
           }
         }
 
-        // If we requested a specific locale, filter out others
-        // If target is 'fr', we want intro.fr.mdx (if exists) OR intro.mdx (fallback? no, getAllDocs is usually for list)
-        // Actually, for sidebar we want the "best" version of each doc for the current locale.
+        // Read doc directly from file (no HTML processing - sidebar only needs metadata)
+        const slug = isLocalized ? originalFilePath : originalFilePath
+        const filePath = isLocalized
+          ? path.join(versionDir, `${originalFilePath}.${fileLocale}.mdx`)
+          : path.join(versionDir, `${originalFilePath}.mdx`)
 
-        // Strategy: Map all files to their logical slug, then group by slug and pick best locale.
-        // But getAllDocs is async and parallel.
-
-        // Simplified: Just process all files, returning the doc with its true locale.
-        // Then filter/merge later? 
-        // No, current logic returns flat array.
-
-        // Let's try to load the doc.
-        const doc = await getDocBySlug(isLocalized ? `${originalFilePath}.${fileLocale}` : originalFilePath, version, isLocalized ? fileLocale : undefined)
+        const doc = readDocFromFile(filePath, slug)
 
         if (!doc) return null
 
-        // Override filePath properties for sidebar grouping 
+        // Set locale info
+        if (i18nConfig) {
+          const usePrefix = i18nConfig.prefixDefault || fileLocale !== i18nConfig.defaultLocale
+          doc.slug = usePrefix ? `${fileLocale}/${doc.slug}` : doc.slug
+        }
+        doc.meta.locale = fileLocale
+
+        // Override filePath properties for sidebar grouping
         // (we want grouped by logical path, not physically localized path if possible)
         doc.filePath = originalFilePath // Use logical path (without .fr) for grouping
 
@@ -343,8 +357,7 @@ export async function getAllDocs(version = "v1.0.0", locale?: string): Promise<D
         }
 
         return doc
-      }),
-    )
+      })
 
     const isDevelopment = process.env.NODE_ENV === "development"
 

@@ -16,10 +16,21 @@
 
   let isDismissed = $state(false);
 
+  // Safe hash for storage key (handles non-Latin1 chars like emojis)
+  function safeHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
   // Check localStorage for dismissal state
   $effect(() => {
     if (!browser || !banner?.message) return;
-    const storageKey = `specra-banner-dismissed-${btoa(banner.message).slice(0, 16)}`;
+    const storageKey = `specra-banner-dismissed-${safeHash(banner.message)}`;
     const dismissed = localStorage.getItem(storageKey);
     if (dismissed === 'true') {
       isDismissed = true;
@@ -29,7 +40,7 @@
   function dismiss() {
     isDismissed = true;
     if (browser && banner?.message) {
-      const storageKey = `specra-banner-dismissed-${btoa(banner.message).slice(0, 16)}`;
+      const storageKey = `specra-banner-dismissed-${safeHash(banner.message)}`;
       localStorage.setItem(storageKey, 'true');
     }
   }

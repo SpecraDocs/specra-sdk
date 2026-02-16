@@ -8,6 +8,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Inter font for consistent typography matching the original design */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
 :root {
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.12 0 0);

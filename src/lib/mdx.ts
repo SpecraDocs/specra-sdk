@@ -177,6 +177,14 @@ function preprocessJsxExpressions(markdown: string): string {
         }
       }
 
+      // Convert self-closing tags (e.g., <Icon ... />) to explicit open+close
+      // (e.g., <Icon ...></Icon>) because HTML5 parsers don't honor self-closing
+      // syntax on non-void elements — they treat /> as > and swallow subsequent
+      // siblings as children.
+      if (tagClose === '/>') {
+        const tagName = tagOpen.slice(1) // Remove leading '<'
+        return `${tagOpen}${result}></${tagName}>`
+      }
       return `${tagOpen}${result}${tagClose}`
     })
   }).join('')

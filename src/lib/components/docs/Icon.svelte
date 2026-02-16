@@ -63,7 +63,7 @@
   <svelte:component
     this={icon}
     size={sizeNum}
-    class={className}
+    class="inline-block {className}"
     style={color ? `color: ${color}` : undefined}
   />
 {:else if resolvedType === 'lucide' && lucideComponent}
@@ -71,7 +71,7 @@
   <svelte:component
     this={lucideComponent}
     size={sizeNum}
-    class={className}
+    class="inline-block {className}"
     style={color ? `color: ${color}` : undefined}
   />
 {:else if resolvedType === 'url'}

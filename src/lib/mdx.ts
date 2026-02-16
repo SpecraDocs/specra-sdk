@@ -487,6 +487,10 @@ async function hastChildrenToMdxNodes(children: any[]): Promise<MdxNode[]> {
       const trimmed = html.trim()
       if (trimmed) {
         nodes.push({ type: 'html', content: trimmed })
+      } else if (html.includes(' ') && !html.includes('\n')) {
+        // Preserve horizontal whitespace between elements (e.g., spaces between inline components).
+        // Newline-only whitespace is formatting and can be discarded.
+        nodes.push({ type: 'html', content: ' ' })
       }
       htmlBuffer = []
     }

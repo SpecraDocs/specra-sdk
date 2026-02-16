@@ -97,6 +97,7 @@ export const mdxComponents = {
   Math,
   Columns,
   Column,
+  Badge: DocBadge,
   DocBadge,
   Tooltip,
   Frame,

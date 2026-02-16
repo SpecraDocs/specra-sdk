@@ -29,6 +29,7 @@ export { default as ImageCard } from './ImageCard.svelte';
 export { default as ImageCardGrid } from './ImageCardGrid.svelte';
 export { default as Logo } from './Logo.svelte';
 export { default as Math } from './Math.svelte';
+export { default as MdxContent } from './MdxContent.svelte';
 export { default as MdxHotReload } from './MdxHotReload.svelte';
 export { default as Mermaid } from './Mermaid.svelte';
 export { default as MobileDocLayout } from './MobileDocLayout.svelte';

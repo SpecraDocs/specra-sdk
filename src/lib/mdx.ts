@@ -130,87 +130,158 @@ function preprocessJsxExpressions(markdown: string): string {
     ...Object.keys(COMPONENT_TAG_MAP),
   ])].join('|')
 
-  // Match opening tags of known components with their attributes
-  // This regex finds `<ComponentName` followed by attributes until `>` or `/>`
-  const tagRegex = new RegExp(
-    `(<(?:${allNames}))(\\s[^>]*?)(\\/?>)`,
+  // Regex to find tag starts — the actual tag end is found by the scanner below,
+  // because a simple [^>] regex breaks on `>` inside JSX expressions (e.g. Mermaid's `-->`).
+  const tagStartRegex = new RegExp(
+    `<((?:${allNames}))(?=\\s|/?>)`,
     'gi'
   )
+
+  // Map of HTML5 element names that need renaming to avoid parser collisions.
+  // <image> → <img> (HTML5 spec), <math> → MathML namespace switch.
+  const HTML5_RENAMES: Record<string, string> = {
+    image: 'specra-image',
+    math: 'specra-math',
+  }
 
   // Only process non-code segments
   return segments.map(({ text, isCode }) => {
     if (isCode) return text
 
-    let processed = text.replace(tagRegex, (_match, tagOpen, attrs, tagClose) => {
-      // Manually scan the attributes string to find and replace JSX expression
-      // attributes (name={...}), properly consuming the full balanced-brace expression.
-      let result = ''
-      let pos = 0
+    let processed = ''
+    let lastEnd = 0
 
-      while (pos < attrs.length) {
-        // Try to match `name={` at the current position
-        const attrMatch = attrs.slice(pos).match(/^(\w+)=\{/)
+    // Reset regex state for each segment
+    tagStartRegex.lastIndex = 0
+    let startMatch: RegExpExecArray | null
+    while ((startMatch = tagStartRegex.exec(text)) !== null) {
+      const tagStart = startMatch.index
+      const tagName = startMatch[1]
+
+      // Scan forward from after the tag name to find the tag end,
+      // properly handling quotes, template literals, and brace expressions.
+      let pos = tagStart + startMatch[0].length
+      let inDoubleQuote = false
+      let inSingleQuote = false
+      let inTemplateLiteral = false
+      let braceDepth = 0
+      let tagEnd = -1
+      let isSelfClosing = false
+
+      while (pos < text.length) {
+        const ch = text[pos]
+
+        if (inDoubleQuote) {
+          if (ch === '\\') pos++ // skip escaped char
+          else if (ch === '"') inDoubleQuote = false
+        } else if (inSingleQuote) {
+          if (ch === '\\') pos++ // skip escaped char
+          else if (ch === "'") inSingleQuote = false
+        } else if (inTemplateLiteral) {
+          if (ch === '\\') pos++ // skip escaped char
+          else if (ch === '`') inTemplateLiteral = false
+        } else if (braceDepth > 0) {
+          if (ch === '{') braceDepth++
+          else if (ch === '}') braceDepth--
+          else if (ch === '"') inDoubleQuote = true
+          else if (ch === "'") inSingleQuote = true
+          else if (ch === '`') inTemplateLiteral = true
+        } else {
+          // Top level of tag attributes
+          if (ch === '"') inDoubleQuote = true
+          else if (ch === "'") inSingleQuote = true
+          else if (ch === '{') braceDepth++
+          else if (ch === '/' && text[pos + 1] === '>') {
+            isSelfClosing = true
+            tagEnd = pos + 2
+            break
+          } else if (ch === '>') {
+            tagEnd = pos + 1
+            break
+          }
+        }
+        pos++
+      }
+
+      if (tagEnd === -1) continue // Unclosed tag, skip
+
+      // Extract attributes between tag name and closing >
+      const attrsStart = tagStart + startMatch[0].length
+      const attrsEnd = isSelfClosing ? tagEnd - 2 : tagEnd - 1
+      const attrs = text.slice(attrsStart, attrsEnd)
+
+      // Process JSX expression attributes (name={...}) into HTML-safe string attributes
+      let result = ''
+      let aPos = 0
+      while (aPos < attrs.length) {
+        const attrMatch = attrs.slice(aPos).match(/^(\w+)=\{/)
         if (attrMatch) {
           const attrName = attrMatch[1]
-          const braceStart = pos + attrMatch[0].length
-
-          // Find the matching closing brace, handling nesting
+          const braceStart2 = aPos + attrMatch[0].length
+          // Find matching closing brace, handling nesting + quotes
           let depth = 1
-          let i = braceStart
-          for (; i < attrs.length && depth > 0; i++) {
-            if (attrs[i] === '{') depth++
-            else if (attrs[i] === '}') depth--
+          let inDQ = false, inSQ = false, inTL = false
+          let j = braceStart2
+          for (; j < attrs.length && depth > 0; j++) {
+            const c = attrs[j]
+            if (inDQ) { if (c === '\\') j++; else if (c === '"') inDQ = false }
+            else if (inSQ) { if (c === '\\') j++; else if (c === "'") inSQ = false }
+            else if (inTL) { if (c === '\\') j++; else if (c === '`') inTL = false }
+            else {
+              if (c === '{') depth++
+              else if (c === '}') depth--
+              else if (c === '"') inDQ = true
+              else if (c === "'") inSQ = true
+              else if (c === '`') inTL = true
+            }
           }
-
           if (depth === 0) {
-            // Extract the expression (between the outer braces)
-            const expression = attrs.slice(braceStart, i - 1)
-            const escaped = expression.replace(/"/g, '&quot;')
+            const expression = attrs.slice(braceStart2, j - 1)
+            // Encode " and newlines so the value survives HTML attribute parsing
+            // and the multiline-collapsing step. parse5 decodes &#10; back to \n.
+            const escaped = expression.replace(/"/g, '&quot;').replace(/\n/g, '&#10;')
             result += `${attrName}="__jsx:${escaped}"`
-            pos = i // advance past the closing brace
+            aPos = j
           } else {
-            // Unbalanced braces, emit as-is and advance one char
-            result += attrs[pos]
-            pos++
+            result += attrs[aPos]
+            aPos++
           }
         } else {
-          result += attrs[pos]
-          pos++
+          result += attrs[aPos]
+          aPos++
         }
       }
 
       // Collapse multiline attributes to a single line so remark-parse
-      // recognizes the tag as inline HTML (multiline tags are not recognized
-      // as HTML blocks for non-standard element names).
+      // recognizes the tag as inline HTML.
       result = result.replace(/\s*\n\s*/g, ' ')
 
-      // Rename tags that collide with HTML5 built-in elements to safe custom
-      // element names. HTML5 converts <image> to <img> and <math> triggers
-      // MathML namespace — both break component detection in rehype-raw.
-      const rawTagName = tagOpen.slice(1)
-      let safeTagOpen = tagOpen
-      let safeTagName = rawTagName
-      const HTML5_RENAMES: Record<string, string> = {
-        image: 'specra-image',
-        math: 'specra-math',
-      }
-      const rename = HTML5_RENAMES[rawTagName.toLowerCase()]
-      if (rename) {
-        safeTagOpen = `<${rename}`
-        safeTagName = rename
+      // Rename tags that collide with HTML5 built-in elements
+      const rename = HTML5_RENAMES[tagName.toLowerCase()]
+      const safeName = rename || tagName
+      const safeOpen = `<${safeName}`
+
+      // Add text before this tag
+      processed += text.slice(lastEnd, tagStart)
+
+      // Emit the processed tag
+      if (isSelfClosing) {
+        // Convert self-closing to explicit open+close (HTML5 doesn't honor />
+        // on non-void elements — it swallows subsequent siblings as children).
+        processed += `${safeOpen}${result}></${safeName}>`
+      } else {
+        processed += `${safeOpen}${result}>`
       }
 
-      // Convert self-closing tags (e.g., <Icon ... />) to explicit open+close
-      // (e.g., <Icon ...></Icon>) because HTML5 parsers don't honor self-closing
-      // syntax on non-void elements — they treat /> as > and swallow subsequent
-      // siblings as children.
-      if (tagClose === '/>') {
-        return `${safeTagOpen}${result}></${safeTagName}>`
-      }
-      return `${safeTagOpen}${result}${tagClose}`
-    })
+      lastEnd = tagEnd
+      // Advance regex past this tag to avoid re-matching inside attrs
+      tagStartRegex.lastIndex = tagEnd
+    }
 
-    // Also rename closing tags to match the opening tag renames
+    // Add remaining text
+    processed += text.slice(lastEnd)
+
+    // Rename closing tags to match the opening tag renames
     processed = processed.replace(/<\/Image\s*>/gi, '</specra-image>')
     processed = processed.replace(/<\/Math\s*>/gi, '</specra-math>')
 
@@ -265,9 +336,10 @@ function parseJsxExpression(expr: string): any {
   if (trimmed === 'null') return null
   if (trimmed === 'undefined') return undefined
 
-  // String literal (quoted)
+  // String literal (quoted or template literal)
   if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+      (trimmed.startsWith('`') && trimmed.endsWith('`'))) {
     return trimmed.slice(1, -1)
   }
 
@@ -337,7 +409,7 @@ function convertProps(properties: Record<string, any>): Record<string, any> {
       props[propName] = true
     } else if (typeof value === 'string' && value.startsWith('__jsx:')) {
       // Parse back JSX expressions that were encoded during preprocessing
-      const expression = value.slice(6).replace(/&quot;/g, '"')
+      const expression = value.slice(6).replace(/&quot;/g, '"').replace(/&#10;/g, '\n')
       props[propName] = parseJsxExpression(expression)
     } else {
       props[propName] = value

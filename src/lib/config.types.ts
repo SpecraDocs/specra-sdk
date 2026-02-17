@@ -78,6 +78,8 @@ export interface NavigationConfig {
   tocMaxDepth?: number
   /** Tab groups for organizing documentation sections */
   tabGroups?: TabGroup[]
+  /** Sidebar visual style: "card" (rounded container) or "flush" (attached to screen edge) */
+  sidebarStyle?: "card" | "flush"
 }
 
 /**

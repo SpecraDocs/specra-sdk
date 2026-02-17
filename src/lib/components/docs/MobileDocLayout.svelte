@@ -44,6 +44,7 @@
   let { docs, version, config, activeTabGroup, onTabChange, header, toc, children }: Props = $props();
 
   let sidebarOpen = $derived($sidebarStore);
+  let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
 
   function handleTabChange(tabId: string) {
     onTabChange?.(tabId);
@@ -145,9 +146,9 @@
   </div>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-2 md:px-6 py-8">
+  {#if isFlush}
     <div class="flex">
-      <!-- Desktop Sidebar -->
+      <!-- Desktop Sidebar - flush to left edge -->
       <div class="hidden lg:block">
         <Sidebar
           {docs}
@@ -157,20 +158,53 @@
         />
       </div>
 
-      <div class="flex-1 min-w-0">
-        <div class="flex flex-col gap-2 px-2 md:px-8">
-          <!-- Content -->
-          {@render children()}
+      <main class="flex-1 min-w-0 px-2 md:px-6 py-8">
+        <div class="flex">
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-col gap-2 px-2 md:px-8">
+              <!-- Content -->
+              {@render children()}
 
-          <!-- Footer -->
-          <Footer {config} />
+              <!-- Footer -->
+              <Footer {config} />
+            </div>
+          </div>
+
+          <!-- ToC -->
+          {#if toc}
+            {@render toc()}
+          {/if}
         </div>
-      </div>
-
-      <!-- ToC -->
-      {#if toc}
-        {@render toc()}
-      {/if}
+      </main>
     </div>
-  </main>
+  {:else}
+    <main class="container mx-auto px-2 md:px-6 py-8">
+      <div class="flex">
+        <!-- Desktop Sidebar - inside container -->
+        <div class="hidden lg:block">
+          <Sidebar
+            {docs}
+            {version}
+            {config}
+            {activeTabGroup}
+          />
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-col gap-2 px-2 md:px-8">
+            <!-- Content -->
+            {@render children()}
+
+            <!-- Footer -->
+            <Footer {config} />
+          </div>
+        </div>
+
+        <!-- ToC -->
+        {#if toc}
+          {@render toc()}
+        {/if}
+      </div>
+    </main>
+  {/if}
 </div>

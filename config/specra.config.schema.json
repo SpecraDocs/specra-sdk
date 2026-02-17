@@ -318,6 +318,14 @@
           "description": "Whether to show the sidebar by default",
           "type": "boolean"
         },
+        "sidebarStyle": {
+          "description": "Sidebar visual style: card (rounded container) or flush (attached to screen edge)",
+          "enum": [
+            "card",
+            "flush"
+          ],
+          "type": "string"
+        },
         "showTableOfContents": {
           "description": "Whether to show table of contents",
           "type": "boolean"

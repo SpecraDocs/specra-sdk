@@ -36,15 +36,21 @@
   let hasTabGroups = $derived(
     config.navigation?.tabGroups && config.navigation.tabGroups.length > 0
   );
+  let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
   let stickyTop = $derived(hasTabGroups ? 'top-[7.5rem]' : 'top-24');
   let maxHeight = $derived(
     hasTabGroups ? 'max-h-[calc(100vh-10rem)]' : 'max-h-[calc(100vh-7rem)]'
+  );
+  let containerClass = $derived(
+    isFlush
+      ? `${maxHeight} overflow-y-auto p-4 border-r border-border`
+      : `${maxHeight} overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50`
   );
 </script>
 
 {#if config.navigation?.showSidebar}
   <aside class="w-64 shrink-0 sticky {stickyTop} self-start">
-    <div class="{maxHeight} overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50">
+    <div class={containerClass}>
       <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Documentation</h2>
       <SidebarMenuItems
         {docs}

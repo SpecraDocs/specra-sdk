@@ -62,6 +62,7 @@ const COMPONENT_TAG_MAP: Record<string, string> = {
   codeblock: 'CodeBlock',
   image: 'Image',
   'specra-image': 'Image',
+  'specra-math': 'Math',
   video: 'Video',
   apiendpoint: 'ApiEndpoint',
   apiparams: 'ApiParams',
@@ -183,14 +184,20 @@ function preprocessJsxExpressions(markdown: string): string {
       // as HTML blocks for non-standard element names).
       result = result.replace(/\s*\n\s*/g, ' ')
 
-      // Rename <Image> to <specra-image> to avoid the HTML5 parser converting
-      // <image> to <img> (a spec quirk), which breaks component detection.
+      // Rename tags that collide with HTML5 built-in elements to safe custom
+      // element names. HTML5 converts <image> to <img> and <math> triggers
+      // MathML namespace — both break component detection in rehype-raw.
       const rawTagName = tagOpen.slice(1)
       let safeTagOpen = tagOpen
       let safeTagName = rawTagName
-      if (rawTagName.toLowerCase() === 'image') {
-        safeTagOpen = '<specra-image'
-        safeTagName = 'specra-image'
+      const HTML5_RENAMES: Record<string, string> = {
+        image: 'specra-image',
+        math: 'specra-math',
+      }
+      const rename = HTML5_RENAMES[rawTagName.toLowerCase()]
+      if (rename) {
+        safeTagOpen = `<${rename}`
+        safeTagName = rename
       }
 
       // Convert self-closing tags (e.g., <Icon ... />) to explicit open+close
@@ -203,8 +210,36 @@ function preprocessJsxExpressions(markdown: string): string {
       return `${safeTagOpen}${result}${tagClose}`
     })
 
-    // Also rename closing </Image> tags to match the opening tag rename
+    // Also rename closing tags to match the opening tag renames
     processed = processed.replace(/<\/Image\s*>/gi, '</specra-image>')
+    processed = processed.replace(/<\/Math\s*>/gi, '</specra-math>')
+
+    // Convert JSX string children to a `children` prop attribute.
+    // In JSX, <Math>{"E = mc^2"}</Math> passes the string as children.
+    // In Svelte, slot content is not a string prop, so we convert it to an attribute.
+    const jsxChildrenRegex = new RegExp(
+      `(<(?:${allNames})[^>]*>)\\s*\\{\\s*(["'])([\\s\\S]*?)\\2\\s*\\}\\s*(<\\/(?:${allNames})\\s*>)`,
+      'gi'
+    )
+    processed = processed.replace(jsxChildrenRegex, (_match, openTag: string, _quote: string, content: string, closeTag: string) => {
+      // Unescape JavaScript string escape sequences (e.g. \\ → \, \n → newline)
+      const unescaped = content.replace(/\\(.)/g, (_: string, ch: string) => {
+        switch (ch) {
+          case 'n': return '\n'
+          case 't': return '\t'
+          case 'r': return '\r'
+          case '\\': return '\\'
+          case '"': return '"'
+          case "'": return "'"
+          default: return ch
+        }
+      })
+      // Escape for HTML attribute value
+      const escaped = unescaped.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // Inject children prop into the opening tag
+      const newOpenTag = openTag.slice(0, -1) + ` children="${escaped}">`
+      return `${newOpenTag}${closeTag}`
+    })
 
     return processed
   }).join('')

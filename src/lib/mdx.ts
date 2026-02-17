@@ -739,6 +739,8 @@ export interface DocMeta {
   icon?: string  // Icon name for sidebar display (Lucide icon name)
   tab_group?: string  // Tab group ID for organizing docs into tabs
   locale?: string // Locale of the document
+  protected?: boolean  // Whether this page requires social login to access
+  isProtected?: boolean  // Whether this page requires authentication
 }
 
 export interface Doc {
@@ -863,6 +865,7 @@ function readDocFromFile(filePath: string, originalSlug: string): Doc | null {
         content: safeContent,
         reading_time: minutes,
         word_count: words,
+        ...(data.protected === true ? { isProtected: true } : {}),
       } as DocMeta,
       content: safeContent,
     }
@@ -1080,11 +1083,13 @@ export function getAllDocs(version = "v1.0.0", locale?: string): Doc[] {
       }
     })
 
-    return Array.from(uniqueDocs.values()).sort((a, b) => {
+    const sortedDocs = Array.from(uniqueDocs.values()).sort((a, b) => {
       const orderA = a.meta.sidebar_position ?? a.meta.order ?? 999
       const orderB = b.meta.sidebar_position ?? b.meta.order ?? 999
       return orderA - orderB
     })
+
+    return sortedDocs
   } catch (error) {
     console.error(`Error getting all docs for version ${version}:`, error)
     return []

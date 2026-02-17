@@ -451,6 +451,10 @@
           "description": "Organization or author name",
           "type": "string"
         },
+        "projectId": {
+          "description": "Project ID to tie this doc site to a Specra project for visitor tracking",
+          "type": "string"
+        },
         "projectName": {
           "description": "Project name",
           "type": "string"

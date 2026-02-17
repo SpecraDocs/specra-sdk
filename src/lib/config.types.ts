@@ -30,6 +30,8 @@ export interface SiteConfig {
   hideTitle?: boolean
   /** Whether to hide the site logo in the header */
   hideLogo?: boolean
+  /** Project ID to tie this doc site to a Specra project for visitor tracking */
+  projectId?: string
 }
 
 /**

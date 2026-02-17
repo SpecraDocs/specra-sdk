@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { ChevronRight, ChevronDown, FolderOpen } from 'lucide-svelte';
+  import { ChevronRight, ChevronDown, FolderOpen, Lock } from 'lucide-svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
   import Icon from './Icon.svelte';
   import { sortSidebarItems, sortSidebarGroups } from '$lib/sidebar-utils.js';
@@ -304,6 +304,9 @@
                 <Icon icon={item.doc.meta.icon} size={16} className="shrink-0" />
               {/if}
               {item.doc.title}
+              {#if item.doc.meta?.isProtected}
+                <Lock size={14} class="shrink-0 text-muted-foreground ml-auto" />
+              {/if}
             </a>
           {/if}
         {/each}
@@ -328,6 +331,9 @@
           <Icon icon={doc.meta.icon} size={16} className="shrink-0" />
         {/if}
         {doc.title}
+        {#if doc.meta?.isProtected}
+          <Lock size={14} class="shrink-0 text-muted-foreground ml-auto" />
+        {/if}
       </a>
     {/each}
   {/if}

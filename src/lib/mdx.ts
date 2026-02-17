@@ -61,6 +61,7 @@ const COMPONENT_TAG_MAP: Record<string, string> = {
   frame: 'Frame',
   codeblock: 'CodeBlock',
   image: 'Image',
+  'specra-image': 'Image',
   video: 'Video',
   apiendpoint: 'ApiEndpoint',
   apiparams: 'ApiParams',
@@ -139,7 +140,7 @@ function preprocessJsxExpressions(markdown: string): string {
   return segments.map(({ text, isCode }) => {
     if (isCode) return text
 
-    return text.replace(tagRegex, (_match, tagOpen, attrs, tagClose) => {
+    let processed = text.replace(tagRegex, (_match, tagOpen, attrs, tagClose) => {
       // Manually scan the attributes string to find and replace JSX expression
       // attributes (name={...}), properly consuming the full balanced-brace expression.
       let result = ''
@@ -177,16 +178,35 @@ function preprocessJsxExpressions(markdown: string): string {
         }
       }
 
+      // Collapse multiline attributes to a single line so remark-parse
+      // recognizes the tag as inline HTML (multiline tags are not recognized
+      // as HTML blocks for non-standard element names).
+      result = result.replace(/\s*\n\s*/g, ' ')
+
+      // Rename <Image> to <specra-image> to avoid the HTML5 parser converting
+      // <image> to <img> (a spec quirk), which breaks component detection.
+      const rawTagName = tagOpen.slice(1)
+      let safeTagOpen = tagOpen
+      let safeTagName = rawTagName
+      if (rawTagName.toLowerCase() === 'image') {
+        safeTagOpen = '<specra-image'
+        safeTagName = 'specra-image'
+      }
+
       // Convert self-closing tags (e.g., <Icon ... />) to explicit open+close
       // (e.g., <Icon ...></Icon>) because HTML5 parsers don't honor self-closing
       // syntax on non-void elements — they treat /> as > and swallow subsequent
       // siblings as children.
       if (tagClose === '/>') {
-        const tagName = tagOpen.slice(1) // Remove leading '<'
-        return `${tagOpen}${result}></${tagName}>`
+        return `${safeTagOpen}${result}></${safeTagName}>`
       }
-      return `${tagOpen}${result}${tagClose}`
+      return `${safeTagOpen}${result}${tagClose}`
     })
+
+    // Also rename closing </Image> tags to match the opening tag rename
+    processed = processed.replace(/<\/Image\s*>/gi, '</specra-image>')
+
+    return processed
   }).join('')
 }
 

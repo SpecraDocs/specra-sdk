@@ -76,15 +76,23 @@ my-docs/
     "title": "My Documentation",
     "description": "Awesome docs built with Specra",
     "url": "https://docs.example.com",
-    "logo": "/logo.png"
+    "activeVersion": "v1.0.0"
   },
   "theme": {
     "defaultMode": "system",
-    "primaryColor": "#0070f3"
+    "respectPrefersColorScheme": true
   },
   "navigation": {
-    "sidebar": true,
-    "breadcrumbs": true
+    "showSidebar": true,
+    "collapsibleSidebar": true,
+    "showBreadcrumbs": true,
+    "showTableOfContents": true,
+    "sidebarStyle": "card"
+  },
+  "features": {
+    "versioning": true,
+    "showVersionBadge": false,
+    "showReadingTime": true
   }
 }
 ```

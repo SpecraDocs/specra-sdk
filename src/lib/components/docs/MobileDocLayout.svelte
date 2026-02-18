@@ -68,6 +68,7 @@
       tabGroups={config.navigation.tabGroups}
       activeTabId={activeTabGroup}
       onTabChange={handleTabChange}
+      flush={isFlush}
       {docs}
       {version}
     />

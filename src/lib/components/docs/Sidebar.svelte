@@ -51,7 +51,12 @@
 {#if config.navigation?.showSidebar}
   <aside class="w-64 shrink-0 sticky {stickyTop} self-start">
     <div class={containerClass}>
-      <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Documentation</h2>
+      <div class="flex items-center justify-between mb-4 px-2">
+        <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Documentation</h2>
+        {#if config.features?.showVersionBadge && version}
+          <span class="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{version}</span>
+        {/if}
+      </div>
       <SidebarMenuItems
         {docs}
         {version}

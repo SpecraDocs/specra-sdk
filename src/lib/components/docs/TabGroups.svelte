@@ -24,9 +24,10 @@
     mobileOnly?: boolean;
     docs?: DocItem[];
     version?: string;
+    flush?: boolean;
   }
 
-  let { tabGroups, activeTabId, onTabChange, mobileOnly = false, docs, version }: Props = $props();
+  let { tabGroups, activeTabId, onTabChange, mobileOnly = false, docs, version, flush = false }: Props = $props();
 
   let dropdownOpen = $state(false);
 
@@ -112,7 +113,7 @@
   {:else}
     <!-- Full version with sticky header -->
     <div class="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="container mx-auto px-2 md:px-6">
+      <div class="{flush ? '' : 'container mx-auto'} px-4 md:px-6">
         <!-- Mobile Dropdown -->
         <div class="md:hidden relative">
           <button

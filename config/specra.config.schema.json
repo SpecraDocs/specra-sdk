@@ -164,6 +164,10 @@
           "description": "Show tags",
           "type": "boolean"
         },
+        "showVersionBadge": {
+          "description": "Show version badge in the sidebar",
+          "type": "boolean"
+        },
         "versioning": {
           "description": "Enable version dropdown",
           "type": "boolean"
@@ -318,17 +322,17 @@
           "description": "Whether to show the sidebar by default",
           "type": "boolean"
         },
+        "showTableOfContents": {
+          "description": "Whether to show table of contents",
+          "type": "boolean"
+        },
         "sidebarStyle": {
-          "description": "Sidebar visual style: card (rounded container) or flush (attached to screen edge)",
+          "description": "Sidebar visual style: \"card\" (rounded container) or \"flush\" (attached to screen edge)",
           "enum": [
             "card",
             "flush"
           ],
           "type": "string"
-        },
-        "showTableOfContents": {
-          "description": "Whether to show table of contents",
-          "type": "boolean"
         },
         "tabGroups": {
           "description": "Tab groups for organizing documentation sections",

@@ -19,6 +19,7 @@
   const configStore = getConfigContext();
   let config = $derived(configProp || $configStore);
   let searchOpen = $state(false);
+  let isFlush = $derived(config?.navigation?.sidebarStyle === 'flush');
 
   $effect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,7 +34,7 @@
 </script>
 
 <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-  <div class="container flex h-16 items-center justify-between px-2 md:px-6 mx-auto">
+  <div class="{isFlush ? '' : 'container mx-auto'} flex h-16 items-center justify-between px-4 md:px-6">
     <div class="flex items-center gap-1">
       <button
         onclick={() => sidebarStore.toggle()}

@@ -196,6 +196,8 @@ export interface FeaturesConfig {
   showTags?: boolean
   /** Enable version dropdown */
   versioning?: boolean
+  /** Show version badge in the sidebar */
+  showVersionBadge?: boolean
   /** 
    * Internationalization (i18n) configuration
    * Set to true to enable with defaults, or provide configuration object

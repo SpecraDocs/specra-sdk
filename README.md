@@ -1,6 +1,6 @@
 # Specra
 
-A modern documentation library for SvelteKit that makes it easy to create beautiful, feature-rich documentation sites.
+A modern documentation library built on SvelteKit that makes it easy to create beautiful, feature-rich documentation sites.
 To view the docs, visit [Specra Docs](https://specra-docs.com).
 
 ## Features

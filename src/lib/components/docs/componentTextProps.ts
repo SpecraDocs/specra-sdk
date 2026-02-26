@@ -33,6 +33,9 @@ export const COMPONENT_TEXT_PROPS: Record<string, string[]> = {
 
     // Step components
     Step: ["title"],
+
+    // Timeline components
+    TimelineItem: ["title", "date"],
 }
 
 export function extractComponentPropsText(mdx: string): string {

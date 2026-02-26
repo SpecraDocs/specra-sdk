@@ -47,6 +47,8 @@ export { default as Steps } from './Steps.svelte';
 export { default as Tab } from './Tab.svelte';
 export { default as TabGroups } from './TabGroups.svelte';
 export { default as TableOfContents } from './TableOfContents.svelte';
+export { default as Timeline } from './Timeline.svelte';
+export { default as TimelineItem } from './TimelineItem.svelte';
 export { default as Tabs } from './Tabs.svelte';
 export { default as ThemeToggle } from './ThemeToggle.svelte';
 export { default as Tooltip } from './Tooltip.svelte';

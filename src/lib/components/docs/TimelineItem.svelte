@@ -3,15 +3,20 @@
 
   interface Props {
     title: string;
+    date?: string;
+    icon?: string;
     children?: Snippet;
   }
 
-  let { title, children }: Props = $props();
+  let { title, date, icon, children }: Props = $props();
 </script>
 
-<div class="step-item relative pl-8 pb-8 border-l-2 border-border last:border-l-0 last:pb-0">
+<div class="timeline-item relative pl-8 pb-8 border-l-2 border-border last:border-l-0 last:pb-0">
   <div class="mb-2">
     <h3 class="text-lg font-semibold text-foreground">{title}</h3>
+    {#if date}
+      <span class="text-sm text-muted-foreground">{date}</span>
+    {/if}
   </div>
   <div class="prose prose-sm dark:prose-invert max-w-none [&>*:last-child]:mb-0">
     {#if children}
@@ -21,11 +26,11 @@
 </div>
 
 <style>
-  .step-item {
-    counter-increment: step;
+  .timeline-item {
+    counter-increment: timeline-step;
   }
-  .step-item::before {
-    content: counter(step);
+  .timeline-item::before {
+    content: counter(timeline-step);
     position: absolute;
     top: 0;
     left: -1px;

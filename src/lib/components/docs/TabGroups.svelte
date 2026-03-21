@@ -112,7 +112,7 @@
     </div>
   {:else}
     <!-- Full version -->
-    <div class="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="border-b border-border bg-muted/40 backdrop-blur supports-[backdrop-filter]:bg-muted/30">
       <div class="{flush ? '' : 'container mx-auto'} px-4 md:px-6">
         <!-- Mobile Dropdown -->
         <div class="md:hidden relative">

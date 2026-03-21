@@ -5,7 +5,7 @@
  */
 
 export { defaultConfig } from "./config.types"
-export type { SpecraConfig } from "./config.types"
+export type { SpecraConfig, VersionConfig, BannerConfig } from "./config.types"
 
 // For client components, config should be passed as props from server components
 // These are re-exported for convenience but will only work on the server

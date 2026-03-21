@@ -61,6 +61,33 @@ export interface TabGroup {
 }
 
 /**
+ * Banner configuration for version-level or site-level banners.
+ */
+export interface BannerConfig {
+  /** Banner message text. Supports markdown links like [text](/url). */
+  text: string
+  /** Banner style: info, warning, error, success */
+  type?: 'info' | 'warning' | 'error' | 'success'
+}
+
+/**
+ * Per-version configuration that can override global config settings.
+ * Loaded from docs/{version}/_version_.json
+ */
+export interface VersionConfig {
+  /** Display label for this version (e.g., "v1.0 (Stable)"). Defaults to directory name. */
+  label?: string
+  /** Hide this version from the version switcher. Useful for unreleased versions. */
+  hidden?: boolean
+  /** Short badge text shown next to the version (e.g., "Beta", "LTS", "Deprecated"). */
+  badge?: string
+  /** Banner shown at the top of every page in this version. Overrides global banner. */
+  banner?: BannerConfig
+  /** Override tab groups for this version. Empty array = no tabs. */
+  tabGroups?: TabGroup[]
+}
+
+/**
  * Navigation and sidebar configuration
  */
 export interface NavigationConfig {

@@ -8,13 +8,21 @@
   import Logo from './Logo.svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
 
+  interface VersionMeta {
+    id: string;
+    label: string;
+    badge?: string;
+    hidden?: boolean;
+  }
+
   interface Props {
     currentVersion: string;
     versions: string[];
+    versionsMeta?: VersionMeta[];
     config?: SpecraConfig;
   }
 
-  let { currentVersion, versions, config: configProp }: Props = $props();
+  let { currentVersion, versions, versionsMeta, config: configProp }: Props = $props();
 
   const configStore = getConfigContext();
   let config = $derived(configProp || $configStore);
@@ -76,7 +84,7 @@
       {/if}
 
       {#if config.features?.versioning}
-        <VersionSwitcher {currentVersion} {versions} />
+        <VersionSwitcher {currentVersion} {versions} {versionsMeta} />
       {/if}
 
       <!-- Social Links -->

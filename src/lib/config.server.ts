@@ -1,4 +1,6 @@
-import type { SpecraConfig } from "./config.types"
+import fs from "fs"
+import path from "path"
+import type { SpecraConfig, VersionConfig } from "./config.types"
 import { defaultConfig } from "./config.types"
 
 /**
@@ -166,6 +168,94 @@ export function getConfig(): SpecraConfig {
 export function reloadConfig(userConfig: Partial<SpecraConfig>): SpecraConfig {
   configInstance = loadConfig(userConfig)
   return configInstance
+}
+
+/**
+ * Load per-version configuration from docs/{version}/_version_.json.
+ * Returns null if the file doesn't exist or is invalid.
+ */
+const versionConfigCache = new Map<string, { data: VersionConfig | null; timestamp: number }>()
+const VCFG_TTL = process.env.NODE_ENV === 'development' ? 5000 : 60000
+
+export function loadVersionConfig(version: string): VersionConfig | null {
+  const cached = versionConfigCache.get(version)
+  if (cached && Date.now() - cached.timestamp < VCFG_TTL) {
+    return cached.data
+  }
+
+  try {
+    const versionConfigPath = path.join(process.cwd(), "docs", version, "_version_.json")
+    if (!fs.existsSync(versionConfigPath)) {
+      versionConfigCache.set(version, { data: null, timestamp: Date.now() })
+      return null
+    }
+    const content = fs.readFileSync(versionConfigPath, "utf8")
+    const data = JSON.parse(content) as VersionConfig
+    versionConfigCache.set(version, { data, timestamp: Date.now() })
+    return data
+  } catch (error) {
+    console.error(`Error loading _version_.json for ${version}:`, error)
+    versionConfigCache.set(version, { data: null, timestamp: Date.now() })
+    return null
+  }
+}
+
+/**
+ * Get the effective config for a specific version.
+ * Merges global config with per-version overrides from _version_.json.
+ * If no _version_.json exists, returns the global config unchanged.
+ */
+export function getEffectiveConfig(version: string): SpecraConfig {
+  const globalConfig = getConfig()
+  const versionConfig = loadVersionConfig(version)
+
+  if (!versionConfig) {
+    return globalConfig
+  }
+
+  const effective = { ...globalConfig }
+
+  if (versionConfig.tabGroups !== undefined) {
+    effective.navigation = {
+      ...effective.navigation,
+      tabGroups: versionConfig.tabGroups,
+    }
+  }
+
+  return effective
+}
+
+/**
+ * Version metadata for display in the version switcher.
+ */
+export interface VersionMeta {
+  /** Directory name (e.g., "v1.0.0") — used for routing */
+  id: string
+  /** Display label (e.g., "v1.0 (Stable)") — defaults to id */
+  label: string
+  /** Short badge text (e.g., "Beta", "LTS") */
+  badge?: string
+  /** Whether this version is hidden from the switcher */
+  hidden?: boolean
+  /** Version-level banner */
+  banner?: import("./config.types").BannerConfig
+}
+
+/**
+ * Get metadata for all versions, enriched with _version_.json data.
+ * Hidden versions are included but marked — the UI decides whether to show them.
+ */
+export function getVersionsMeta(versions: string[]): VersionMeta[] {
+  return versions.map(id => {
+    const versionConfig = loadVersionConfig(id)
+    return {
+      id,
+      label: versionConfig?.label || id,
+      badge: versionConfig?.badge,
+      hidden: versionConfig?.hidden,
+      banner: versionConfig?.banner,
+    }
+  })
 }
 
 /**

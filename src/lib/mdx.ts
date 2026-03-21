@@ -100,10 +100,13 @@ const PROP_NAME_MAP: Record<string, string> = {
  *   span={2}                  →  span="__jsx:2"
  *   variant="success"         →  (unchanged, already a string)
  */
-function preprocessJsxExpressions(markdown: string): string {
-  // Split markdown into fenced code blocks and non-code segments.
-  // Only process JSX expressions in non-code segments to avoid corrupting code examples.
-  // Matches ```` ``` ```` or ```` ```` ```` fenced blocks (3+ backticks or tildes).
+/**
+ * Split markdown into fenced code blocks and non-code segments.
+ * Code blocks are preserved as-is; only non-code segments should be
+ * processed by JSX/component preprocessing functions.
+ * Matches 3+ backticks or tildes as fence markers.
+ */
+function splitByCodeFences(markdown: string): Array<{ text: string; isCode: boolean }> {
   const fencedCodeRegex = /(^|\n)((`{3,}|~{3,}).*\n[\s\S]*?\n\3\s*(?:\n|$))/g
   const segments: Array<{ text: string; isCode: boolean }> = []
   let lastIndex = 0
@@ -111,18 +114,23 @@ function preprocessJsxExpressions(markdown: string): string {
   let match: RegExpExecArray | null
   while ((match = fencedCodeRegex.exec(markdown)) !== null) {
     const codeStart = match.index + (match[1]?.length || 0)
-    // Add the non-code segment before this code block
     if (codeStart > lastIndex) {
       segments.push({ text: markdown.slice(lastIndex, codeStart), isCode: false })
     }
-    // Add the code block as-is
     segments.push({ text: match[2], isCode: true })
     lastIndex = match.index + match[0].length
   }
-  // Add remaining non-code segment
   if (lastIndex < markdown.length) {
     segments.push({ text: markdown.slice(lastIndex), isCode: false })
   }
+
+  return segments
+}
+
+function preprocessJsxExpressions(markdown: string): string {
+  // Split markdown into fenced code blocks and non-code segments.
+  // Only process JSX expressions in non-code segments to avoid corrupting code examples.
+  const segments = splitByCodeFences(markdown)
 
   // Build a pattern that matches known component tag names (case-insensitive for safety)
   const allNames = [...new Set([
@@ -772,6 +780,16 @@ function hasNestedComponent(node: any): boolean {
  * dedent removes the shared indentation.
  */
 function dedentComponentChildren(markdown: string): string {
+  // Split by code fences first — only process non-code segments
+  const segments = splitByCodeFences(markdown)
+  const processed = segments.map(({ text, isCode }) => {
+    if (isCode) return text
+    return dedentComponentChildrenInSegment(text)
+  }).join('')
+  return processed
+}
+
+function dedentComponentChildrenInSegment(markdown: string): string {
   // Build a single regex that matches any known component opening tag
   const allNames = [...new Set([
     ...Object.values(COMPONENT_TAG_MAP),
@@ -877,6 +895,15 @@ function dedentComponentChildren(markdown: string): string {
  * stays as one HTML block that parse5 can parse correctly.
  */
 function ensureComponentBlockIntegrity(markdown: string): string {
+  // Split by code fences first — only process non-code segments
+  const segments = splitByCodeFences(markdown)
+  return segments.map(({ text, isCode }) => {
+    if (isCode) return text
+    return ensureComponentBlockIntegrityInSegment(text)
+  }).join('')
+}
+
+function ensureComponentBlockIntegrityInSegment(markdown: string): string {
   const allNames = [...new Set([
     ...Object.values(COMPONENT_TAG_MAP),
     ...Object.keys(COMPONENT_TAG_MAP),

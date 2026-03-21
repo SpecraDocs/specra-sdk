@@ -25,7 +25,7 @@
   // Build version list: use metadata if available, filter hidden versions
   let visibleVersions = $derived.by(() => {
     if (versionsMeta && versionsMeta.length > 0) {
-      return versionsMeta.filter(v => !v.hidden || v.id === currentVersion);
+      return versionsMeta.filter(v => !v.hidden);
     }
     return versions.map(id => ({ id, label: id }));
   });

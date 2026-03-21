@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { ChevronRight, ChevronDown, FolderOpen, Lock } from 'lucide-svelte';
+  import { ChevronRight, ChevronDown, Lock } from 'lucide-svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
   import Icon from './Icon.svelte';
   import { sortSidebarItems, sortSidebarGroups } from '$lib/sidebar-utils.js';
@@ -260,8 +260,6 @@
       >
         {#if group.icon}
           <Icon icon={group.icon} size={16} className="shrink-0" />
-        {:else}
-          <FolderOpen size={16} class="shrink-0" />
         {/if}
         {group.label}
       </a>

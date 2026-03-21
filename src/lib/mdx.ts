@@ -445,9 +445,7 @@ function extractCodeBlockProps(node: any): { code: string; language: string; fil
   // Extract language from className like ['language-javascript']
   const classNames: string[] = codeChild.properties?.className || []
   const langClass = classNames.find((c: string) => typeof c === 'string' && c.startsWith('language-'))
-  if (!langClass) return null
-
-  const language = langClass.replace('language-', '')
+  const language = langClass ? langClass.replace('language-', '') : 'txt'
 
   // Extract text content from the code element
   const code = extractTextContent(codeChild).replace(/\n$/, '')

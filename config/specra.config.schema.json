@@ -45,31 +45,26 @@
     },
     "BannerConfig": {
       "additionalProperties": false,
-      "description": "Site-wide banner configuration",
+      "description": "Banner configuration for version-level or site-level banners.   Site-wide banner configuration",
       "properties": {
-        "dismissible": {
-          "description": "Whether the banner can be dismissed",
-          "type": "boolean"
-        },
-        "enabled": {
-          "description": "Whether the banner is enabled",
-          "type": "boolean"
-        },
-        "message": {
-          "description": "Banner message",
+        "text": {
+          "description": "Banner message text. Supports markdown links like [text](/url).",
           "type": "string"
         },
         "type": {
-          "description": "Banner type",
+          "description": "Banner style: info, warning, error, success   Banner type",
           "enum": [
             "info",
             "warning",
-            "success",
-            "error"
+            "error",
+            "success"
           ],
           "type": "string"
         }
       },
+      "required": [
+        "text"
+      ],
       "type": "object"
     },
     "DeploymentConfig": {

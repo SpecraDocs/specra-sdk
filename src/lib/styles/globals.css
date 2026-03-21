@@ -444,6 +444,9 @@ pre code {
   width: 100%;
   margin-top: 1rem;
   margin-bottom: 1rem;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose :where(thead):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
@@ -481,11 +484,11 @@ pre code {
 }
 
 .prose :where(tbody tr:hover):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-  background: oklch(0.97 0 0);
+  background: var(--muted);
 }
 
 .dark .prose :where(tbody tr:hover):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-  background: oklch(0.14 0 0);
+  background: var(--muted);
 }
 
 html body[data-scroll-locked] {

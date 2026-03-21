@@ -7,6 +7,7 @@
   import ThemeToggle from './ThemeToggle.svelte';
   import SearchModal from './SearchModal.svelte';
   import Logo from './Logo.svelte';
+  import Icon from './Icon.svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
   import type { BannerConfig } from '$lib/config.types.js';
   import type { Snippet } from 'svelte';
@@ -151,6 +152,28 @@
         >
           <MessageCircle class="h-4 w-4" />
         </a>
+      {/if}
+      {#if config.social?.custom}
+        {#each config.social.custom as link}
+          <span class="relative hidden md:inline-flex group/tip">
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center justify-center h-9 w-9 rounded-md hover:bg-muted transition-colors"
+              aria-label={link.label}
+            >
+              {#if link.icon}
+                <Icon icon={link.icon} size={16} />
+              {:else}
+                <span class="text-xs font-medium">{link.label.slice(0, 2)}</span>
+              {/if}
+            </a>
+            <span class="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 text-xs text-popover-foreground bg-popover border border-border rounded-md shadow-sm whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity z-50">
+              {link.label}
+            </span>
+          </span>
+        {/each}
       {/if}
 
       <ThemeToggle />

@@ -114,7 +114,7 @@
   </div>
 
   <!-- Code content -->
-  <div class="bg-gray-200/50 dark:bg-[#0d1117] rounded-b-xl overflow-x-auto border border-border/50">
+  <div class="bg-muted/30 dark:bg-muted/20 rounded-b-xl overflow-x-auto border border-border/50">
     <pre class="p-2 text-[13px] font-mono leading-relaxed text-gray-800 dark:text-gray-200"><code class="table w-full">{#each lines as line, i}{@const isDeletion = language === 'diff' && line.startsWith('-') && !line.startsWith('--')}{@const isAddition = language === 'diff' && line.startsWith('+') && !line.startsWith('++')}{@const isDiff = isDeletion || isAddition}{@const diffBgClass = isDeletion ? 'bg-red-500/5 dark:bg-red-500/10' : isAddition ? 'bg-green-500/5 dark:bg-green-500/10' : ''}{@const diffMarkerClass = isDeletion ? 'text-red-600 dark:text-red-400' : isAddition ? 'text-green-600 dark:text-green-400' : ''}{@const tokens = tokenizeLine(line)}<div class="table-row {diffBgClass}"><span class="table-cell pr-4 text-right select-none text-muted-foreground/40 w-8 align-top">{i + 1}</span><span class="table-cell align-top">{#if tokens.length === 0}&nbsp;{:else}{#each tokens as token, j}{#if j === 0 && isDiff && token.value.length > 0 && (token.value[0] === '+' || token.value[0] === '-')}<span class="{diffMarkerClass} font-bold">{token.value[0]}</span>{#if token.value.length > 1}<span class="token-{token.type}">{token.value.slice(1)}</span>{/if}{:else}<span class="token-{token.type}">{token.value}</span>{/if}{/each}{/if}</span></div>{/each}</code></pre>
   </div>
 </div>

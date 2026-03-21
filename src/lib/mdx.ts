@@ -779,17 +779,36 @@ function hasNestedComponent(node: any): boolean {
  * known component). Inner components are handled naturally since their parent's
  * dedent removes the shared indentation.
  */
-function dedentComponentChildren(markdown: string): string {
-  // Split by code fences first — only process non-code segments
-  const segments = splitByCodeFences(markdown)
-  const processed = segments.map(({ text, isCode }) => {
-    if (isCode) return text
-    return dedentComponentChildrenInSegment(text)
-  }).join('')
-  return processed
+/**
+ * Identify which lines in a text block are inside fenced code blocks.
+ * Returns a Set of line indices (0-based) that are inside code fences.
+ */
+function getCodeFenceLineIndices(lines: string[]): Set<number> {
+  const indices = new Set<number>()
+  let openFence: string | null = null
+  let openIndex = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (openFence) {
+      indices.add(i)
+      const trimmed = line.trim()
+      if (trimmed.startsWith(openFence) && new RegExp(`^${openFence[0]}{${openFence.length},}\\s*$`).test(trimmed)) {
+        openFence = null
+      }
+    } else {
+      const fenceMatch = line.match(/^(\s*)(`{3,}|~{3,})/)
+      if (fenceMatch) {
+        openFence = fenceMatch[2]
+        openIndex = i
+        indices.add(i)
+      }
+    }
+  }
+  return indices
 }
 
-function dedentComponentChildrenInSegment(markdown: string): string {
+function dedentComponentChildren(markdown: string): string {
   // Build a single regex that matches any known component opening tag
   const allNames = [...new Set([
     ...Object.values(COMPONENT_TAG_MAP),
@@ -846,20 +865,25 @@ function dedentComponentChildrenInSegment(markdown: string): string {
     const contentEnd = closeMatch.index
     const innerContent = markdown.slice(contentStart, contentEnd)
 
-    // Find minimum indentation of non-empty, non-code-fence lines
+    // Find minimum indentation of non-empty lines that are NOT inside code fences.
+    // Lines inside code fences (including fence markers and their content) are
+    // excluded so that code at indent 0 doesn't prevent dedenting of component content.
     const lines = innerContent.split('\n')
+    const codeFenceLines = getCodeFenceLineIndices(lines)
     let minIndent = Infinity
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      if (codeFenceLines.has(i)) continue
+      const line = lines[i]
       if (line.trim().length === 0) continue
-      // Skip lines that are fenced code markers (already at correct indent)
-      if (/^\s*(`{3,}|~{3,})/.test(line)) continue
       const indent = line.match(/^(\s*)/)?.[1].length ?? 0
       if (indent > 0 && indent < minIndent) minIndent = indent
     }
 
     if (minIndent > 0 && minIndent !== Infinity) {
-      // Dedent all lines by the common indent
-      const dedented = lines.map(line => {
+      // Dedent non-code-fence lines by the common indent.
+      // Code fence lines are left as-is to preserve their content.
+      const dedented = lines.map((line, i) => {
+        if (codeFenceLines.has(i)) return line
         if (line.trim().length === 0) return line
         return line.slice(Math.min(minIndent, line.match(/^(\s*)/)?.[1].length ?? 0))
       }).join('\n')
@@ -895,15 +919,6 @@ function dedentComponentChildrenInSegment(markdown: string): string {
  * stays as one HTML block that parse5 can parse correctly.
  */
 function ensureComponentBlockIntegrity(markdown: string): string {
-  // Split by code fences first — only process non-code segments
-  const segments = splitByCodeFences(markdown)
-  return segments.map(({ text, isCode }) => {
-    if (isCode) return text
-    return ensureComponentBlockIntegrityInSegment(text)
-  }).join('')
-}
-
-function ensureComponentBlockIntegrityInSegment(markdown: string): string {
   const allNames = [...new Set([
     ...Object.values(COMPONENT_TAG_MAP),
     ...Object.keys(COMPONENT_TAG_MAP),
@@ -957,10 +972,15 @@ function ensureComponentBlockIntegrityInSegment(markdown: string): string {
     const blockEnd = closeMatch.index + closeMatch[0].length
     const block = markdown.slice(blockStart, blockEnd)
 
-    // Collapse blank lines and whitespace-only lines that would cause remark
-    // to split this into separate HTML blocks. A line with only whitespace
-    // is treated as a blank line by CommonMark.
-    const collapsed = block.replace(/\n\s*\n/g, '\n')
+    // Replace blank/whitespace-only lines (outside code fences) with HTML
+    // comments so remark doesn't end the HTML block at those points.
+    // In CommonMark, a blank line inside an HTML type-6 block ends the block.
+    // An HTML comment on the line prevents this while being invisible in output.
+    // Replace ALL blank/whitespace-only lines with HTML comments — even inside
+    // code fences. The code fence content is raw text inside the HTML block and
+    // will be re-processed by processComponentChildren through the markdown
+    // pipeline, which restores proper code formatting.
+    const collapsed = block.replace(/^\s*$/gm, '<!-- -->')
 
     result += markdown.slice(lastIndex, blockStart) + collapsed
     lastIndex = blockEnd

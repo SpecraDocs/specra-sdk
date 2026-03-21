@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Info,
+    PenLine,
     AlertTriangle,
     CheckCircle2,
     XCircle,
@@ -33,10 +34,10 @@
       defaultTitle: 'Info',
     },
     note: {
-      icon: Info,
-      className: 'bg-blue-500/10 border-blue-500/30 text-blue-900 dark:bg-blue-400/5 dark:border-blue-500/20 dark:text-blue-400',
-      iconClassName: 'text-blue-600 dark:text-blue-400',
-      titleClassName: 'text-blue-700 dark:text-blue-300',
+      icon: PenLine,
+      className: 'bg-slate-500/10 border-slate-500/30 text-slate-900 dark:bg-slate-400/5 dark:border-slate-400/20 dark:text-slate-300',
+      iconClassName: 'text-slate-600 dark:text-slate-400',
+      titleClassName: 'text-slate-700 dark:text-slate-300',
       defaultTitle: 'Note',
     },
     warning: {

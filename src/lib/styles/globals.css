@@ -420,6 +420,18 @@ pre code {
   margin-bottom: 0.75rem;
 }
 
+/* Override Tailwind typography's padding-inline-start on lists.
+   The plugin applies ~1.625em to every ol/ul, which compounds on
+   nested lists — each level pushes content further right.
+   Top-level lists get a modest indent; nested lists get less. */
+.prose :where(ol, ul):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  padding-inline-start: 1.25em;
+}
+
+.prose :where(li ol, li ul):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  padding-inline-start: 1em;
+}
+
 html body[data-scroll-locked] {
   overflow: visible !important;
   margin-right: 0 !important;

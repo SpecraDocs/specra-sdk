@@ -478,6 +478,7 @@ function childrenContainMarkdownText(children: any[]): boolean {
           /\[.*\]\(/.test(text) ||                      // links
           /(?:^|\n)\s*[-*+]\s/.test(child.value) ||     // unordered lists
           /(?:^|\n)\s*\d+\.\s/.test(child.value) ||     // ordered lists
+          /(?:^|\n)\s*(`{3,}|~{3,})/.test(child.value) || // fenced code blocks
           (text.length > 10 && /\n/.test(text.trim()))   // multi-line text content (paragraphs)
       ) {
         return true
@@ -508,8 +509,69 @@ function dedent(text: string): string {
 }
 
 /**
+ * Check if a text buffer currently has an unclosed fenced code block.
+ * Returns the fence marker (e.g. "```") if inside a code fence, or null otherwise.
+ */
+function getOpenCodeFence(text: string): string | null {
+  const lines = text.split('\n')
+  let openFence: string | null = null
+  for (const line of lines) {
+    if (openFence) {
+      // Check if this line closes the fence (same or more chars of same type)
+      const trimmed = line.trim()
+      if (trimmed.startsWith(openFence) && /^(`{3,}|~{3,})\s*$/.test(trimmed)) {
+        openFence = null
+      }
+    } else {
+      // Check if this line opens a fence
+      const fenceMatch = line.match(/^(`{3,}|~{3,})/)
+      if (fenceMatch) {
+        openFence = fenceMatch[1]
+      }
+    }
+  }
+  return openFence
+}
+
+/**
+ * Serialize a hast element back to its original tag text representation.
+ * Used to reconstruct component/element tags as plain text when they
+ * appear inside fenced code blocks (where they should be code, not components).
+ */
+function hastElementToText(node: any): string {
+  const tagName = node.tagName || 'div'
+  // Restore PascalCase for known components
+  const displayName = COMPONENT_TAG_MAP[tagName] || tagName
+  const props = node.properties || {}
+  const attrs = Object.entries(props)
+    .filter(([key]) => key !== 'className' || (props[key] as string[])?.length > 0)
+    .map(([key, value]) => {
+      if (value === true || value === '') return key
+      if (typeof value === 'string' && value.startsWith('__jsx:')) {
+        // Restore JSX expression syntax
+        const expr = value.slice(6).replace(/&quot;/g, '"').replace(/&#10;/g, '\n')
+        return `${key}={${expr}}`
+      }
+      return `${key}="${value}"`
+    })
+    .join(' ')
+  const openTag = attrs ? `<${displayName} ${attrs}>` : `<${displayName}>`
+  const childText = (node.children || []).map((c: any) => {
+    if (c.type === 'text') return c.value || ''
+    if (c.type === 'element') return hastElementToText(c)
+    return ''
+  }).join('')
+  return `${openTag}${childText}</${displayName}>`
+}
+
+/**
  * Extract raw text from hast children, preserving component tags as placeholders.
  * Returns the markdown text and a map of placeholders to component MdxNodes.
+ *
+ * Tracks open code fences in the text buffer: if the buffer contains an unclosed
+ * fenced code block (e.g. ``` opened but not closed), subsequent component/element
+ * children are serialized back to text instead of being processed as real components.
+ * This prevents component tags inside code examples from rendering as live components.
  */
 async function processComponentChildren(children: any[]): Promise<MdxNode[]> {
   // Separate text runs from component/element children.
@@ -547,39 +609,48 @@ async function processComponentChildren(children: any[]): Promise<MdxNode[]> {
   for (const child of children) {
     if (child.type === 'text') {
       textBuffer += child.value || ''
-    } else if (isComponentElement(child)) {
-      await flushTextBuffer()
-      const componentName = COMPONENT_TAG_MAP[child.tagName]
-      const props = convertProps(child.properties || {})
-      const childNodes = child.children && child.children.length > 0
-        ? await processSmartChildren(child.children)
-        : []
-      result.push({
-        type: 'component',
-        name: componentName,
-        props,
-        children: childNodes,
-      })
-    } else if (child.type === 'element') {
-      // Regular HTML element inside a component — flush text first, then serialize
-      await flushTextBuffer()
-      const codeBlockProps = extractCodeBlockProps(child)
-      if (codeBlockProps) {
+    } else if (isComponentElement(child) || child.type === 'element') {
+      // Check if we're inside an unclosed code fence in the text buffer.
+      // If so, this element is part of a code example — serialize it back
+      // to text rather than processing it as a real component.
+      const openFence = getOpenCodeFence(textBuffer)
+      if (openFence) {
+        // We're inside a code fence — serialize this element as text
+        textBuffer += hastElementToText(child)
+      } else if (isComponentElement(child)) {
+        await flushTextBuffer()
+        const componentName = COMPONENT_TAG_MAP[child.tagName]
+        const props = convertProps(child.properties || {})
+        const childNodes = child.children && child.children.length > 0
+          ? await processSmartChildren(child.children)
+          : []
         result.push({
           type: 'component',
-          name: 'CodeBlock',
-          props: codeBlockProps,
-          children: [],
+          name: componentName,
+          props,
+          children: childNodes,
         })
-      } else if (hasNestedComponent(child)) {
-        const openTag = toHtml({ ...child, children: [] }).replace(/<\/[^>]+>$/, '')
-        result.push({ type: 'html', content: openTag })
-        result.push(...await processSmartChildren(child.children))
-        result.push({ type: 'html', content: `</${child.tagName}>` })
       } else {
-        const html = toHtml(child).trim()
-        if (html) {
-          result.push({ type: 'html', content: html })
+        // Regular HTML element inside a component — flush text first, then serialize
+        await flushTextBuffer()
+        const codeBlockProps = extractCodeBlockProps(child)
+        if (codeBlockProps) {
+          result.push({
+            type: 'component',
+            name: 'CodeBlock',
+            props: codeBlockProps,
+            children: [],
+          })
+        } else if (hasNestedComponent(child)) {
+          const openTag = toHtml({ ...child, children: [] }).replace(/<\/[^>]+>$/, '')
+          result.push({ type: 'html', content: openTag })
+          result.push(...await processSmartChildren(child.children))
+          result.push({ type: 'html', content: `</${child.tagName}>` })
+        } else {
+          const html = toHtml(child).trim()
+          if (html) {
+            result.push({ type: 'html', content: html })
+          }
         }
       }
     }
@@ -688,9 +759,206 @@ function hasNestedComponent(node: any): boolean {
  * Runs the same remark/rehype pipeline but produces an AST
  * instead of a stringified HTML output.
  */
+/**
+ * Dedent content inside component tags before remark processing.
+ * In CommonMark, 4+ spaces of indentation create code blocks.
+ * When users indent content inside component tags (e.g. <Tabs> inside <Step>),
+ * the inherited indentation causes remark to misinterpret child tags and
+ * markdown as indented code blocks. This strips common leading indentation
+ * from the content between known component open/close tags.
+ *
+ * Only processes the outermost component tags (those not nested inside another
+ * known component). Inner components are handled naturally since their parent's
+ * dedent removes the shared indentation.
+ */
+function dedentComponentChildren(markdown: string): string {
+  // Build a single regex that matches any known component opening tag
+  const allNames = [...new Set([
+    ...Object.values(COMPONENT_TAG_MAP),
+    ...Object.keys(COMPONENT_TAG_MAP),
+  ])]
+  const namesPattern = allNames.join('|')
+
+  // Find outermost component blocks and dedent their entire content
+  // (including nested component tags) so remark doesn't misinterpret indentation.
+  const openTagRegex = new RegExp(
+    `(<(?:${namesPattern})(?:\\s[^>]*)?>)(\\n)`,
+    'gi'
+  )
+
+  let result = ''
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  openTagRegex.lastIndex = 0
+  while ((match = openTagRegex.exec(markdown)) !== null) {
+    // Skip if this tag is nested inside a previously processed block
+    if (match.index < lastIndex) continue
+
+    const tagName = match[1].match(/<(\w+)/)?.[1]
+    if (!tagName) continue
+
+    const contentStart = match.index + match[0].length
+
+    // Find the matching closing tag, handling nesting of the SAME tag
+    const closeTagRegex = new RegExp(`</${tagName}\\s*>`, 'gi')
+    const openNestRegex = new RegExp(`<${tagName}(?:\\s[^>]*)?>`, 'gi')
+
+    closeTagRegex.lastIndex = contentStart
+    openNestRegex.lastIndex = contentStart
+
+    let depth = 1
+    let closeMatch: RegExpExecArray | null = null
+
+    while (depth > 0 && (closeMatch = closeTagRegex.exec(markdown)) !== null) {
+      // Count any nested opens of the same tag before this close
+      while (true) {
+        const nested = openNestRegex.exec(markdown)
+        if (!nested || nested.index >= closeMatch.index) {
+          openNestRegex.lastIndex = closeMatch.index + closeMatch[0].length
+          break
+        }
+        depth++
+      }
+      depth--
+    }
+
+    if (!closeMatch) continue
+
+    const contentEnd = closeMatch.index
+    const innerContent = markdown.slice(contentStart, contentEnd)
+
+    // Find minimum indentation of non-empty, non-code-fence lines
+    const lines = innerContent.split('\n')
+    let minIndent = Infinity
+    for (const line of lines) {
+      if (line.trim().length === 0) continue
+      // Skip lines that are fenced code markers (already at correct indent)
+      if (/^\s*(`{3,}|~{3,})/.test(line)) continue
+      const indent = line.match(/^(\s*)/)?.[1].length ?? 0
+      if (indent > 0 && indent < minIndent) minIndent = indent
+    }
+
+    if (minIndent > 0 && minIndent !== Infinity) {
+      // Dedent all lines by the common indent
+      const dedented = lines.map(line => {
+        if (line.trim().length === 0) return line
+        return line.slice(Math.min(minIndent, line.match(/^(\s*)/)?.[1].length ?? 0))
+      }).join('\n')
+
+      result += markdown.slice(lastIndex, contentStart) + dedented
+      lastIndex = contentEnd
+      // Advance past this entire component block
+      openTagRegex.lastIndex = closeMatch.index + closeMatch[0].length
+    }
+  }
+
+  if (lastIndex > 0) {
+    result += markdown.slice(lastIndex)
+    markdown = result
+    // Re-run to handle inner components that were previously skipped
+    // (e.g. <Step> inside <Steps> now has reduced indentation that needs further dedenting)
+    return dedentComponentChildren(markdown)
+  }
+
+  return markdown
+}
+
+/**
+ * Collapse blank lines inside component blocks so remark-parse treats the
+ * entire component (from opening to closing tag) as a single HTML block.
+ *
+ * In CommonMark, a blank line inside an HTML block (type 6) ends the block.
+ * This causes remark to split component content into separate blocks, and
+ * plain text between child components becomes a `<p>` element that disrupts
+ * parse5's handling of unknown element nesting (siblings become children).
+ *
+ * By removing blank lines inside component blocks, the entire component tree
+ * stays as one HTML block that parse5 can parse correctly.
+ */
+function ensureComponentBlockIntegrity(markdown: string): string {
+  const allNames = [...new Set([
+    ...Object.values(COMPONENT_TAG_MAP),
+    ...Object.keys(COMPONENT_TAG_MAP),
+  ])]
+  const namesPattern = allNames.join('|')
+
+  // Find outermost component blocks and collapse blank lines within them
+  const openTagRegex = new RegExp(
+    `^(\\s*<(?:${namesPattern})(?:\\s[^>]*)?>)\\s*$`,
+    'gim'
+  )
+
+  let result = ''
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  openTagRegex.lastIndex = 0
+  while ((match = openTagRegex.exec(markdown)) !== null) {
+    // Skip if inside a previously processed block
+    if (match.index < lastIndex) continue
+
+    const tagName = match[1].match(/<(\w+)/)?.[1]
+    if (!tagName) continue
+
+    const blockStart = match.index
+
+    // Find matching closing tag, handling nesting
+    const closeTagRegex = new RegExp(`</${tagName}\\s*>`, 'gi')
+    const openNestRegex = new RegExp(`<${tagName}(?:\\s[^>]*)?>`, 'gi')
+
+    closeTagRegex.lastIndex = match.index + match[0].length
+    openNestRegex.lastIndex = match.index + match[0].length
+
+    let depth = 1
+    let closeMatch: RegExpExecArray | null = null
+
+    while (depth > 0 && (closeMatch = closeTagRegex.exec(markdown)) !== null) {
+      while (true) {
+        const nested = openNestRegex.exec(markdown)
+        if (!nested || nested.index >= closeMatch.index) {
+          openNestRegex.lastIndex = closeMatch.index + closeMatch[0].length
+          break
+        }
+        depth++
+      }
+      depth--
+    }
+
+    if (!closeMatch) continue
+
+    const blockEnd = closeMatch.index + closeMatch[0].length
+    const block = markdown.slice(blockStart, blockEnd)
+
+    // Collapse blank lines and whitespace-only lines that would cause remark
+    // to split this into separate HTML blocks. A line with only whitespace
+    // is treated as a blank line by CommonMark.
+    const collapsed = block.replace(/\n\s*\n/g, '\n')
+
+    result += markdown.slice(lastIndex, blockStart) + collapsed
+    lastIndex = blockEnd
+    openTagRegex.lastIndex = blockEnd
+  }
+
+  if (lastIndex > 0) {
+    result += markdown.slice(lastIndex)
+    return result
+  }
+
+  return markdown
+}
+
 async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
   // Pre-process JSX expression attributes into HTML-safe string attributes
   const preprocessed = preprocessJsxExpressions(markdown)
+
+  // Dedent content inside component tags so that indented children
+  // (e.g. <Tabs> inside <Step>) don't get treated as code blocks
+  // by remark-parse (4+ spaces = indented code in CommonMark).
+  const dedented = dedentComponentChildren(preprocessed)
+
+  // Ensure component block integrity in the markdown
+  const normalized = ensureComponentBlockIntegrity(dedented)
 
   const processor = unified()
     .use(remarkParse)
@@ -701,7 +969,7 @@ async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
     .use(rehypeSlug)
     .use(rehypeKatex)
 
-  const mdast = processor.parse(preprocessed)
+  const mdast = processor.parse(normalized)
   const hast = await processor.run(mdast)
 
   // The hast root has children - process them into MdxNodes

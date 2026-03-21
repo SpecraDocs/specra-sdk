@@ -33,24 +33,17 @@
 
   let { docs, version, onLinkClick, config, activeTabGroup }: Props = $props();
 
-  let hasTabGroups = $derived(
-    config.navigation?.tabGroups && config.navigation.tabGroups.length > 0
-  );
   let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
-  let stickyTop = $derived(hasTabGroups ? 'top-[7.5rem]' : 'top-24');
-  let maxHeight = $derived(
-    hasTabGroups ? 'max-h-[calc(100vh-10rem)]' : 'max-h-[calc(100vh-7rem)]'
-  );
   let containerClass = $derived(
     isFlush
-      ? `${maxHeight} overflow-y-auto p-4 border-r border-border`
-      : `${maxHeight} overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50`
+      ? `overflow-y-auto p-4 border-r border-border`
+      : `overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50`
   );
 </script>
 
 {#if config.navigation?.showSidebar}
-  <aside class="w-64 shrink-0 sticky {stickyTop} self-start">
-    <div class={containerClass}>
+  <aside class="w-64 shrink-0 sticky self-start pt-4" style="top: var(--header-height, 4rem);">
+    <div class={containerClass} style="max-height: calc(100vh - var(--header-height, 4rem) - 2rem);">
       <div class="flex items-center justify-between mb-4 px-2">
         <h2 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Documentation</h2>
         {#if config.features?.showVersionBadge && version}

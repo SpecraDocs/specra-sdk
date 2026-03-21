@@ -56,23 +56,11 @@
 </script>
 
 <div class="min-h-screen bg-background">
-  <!-- Header -->
+  <!-- Header (includes banner and tab groups via subheader snippet) -->
   {@render header()}
 
   <!-- Site-wide Banner -->
   <SiteBanner {config} />
-
-  <!-- Tab Groups - shown only if configured -->
-  {#if config.navigation?.tabGroups && config.navigation.tabGroups.length > 0}
-    <TabGroups
-      tabGroups={config.navigation.tabGroups}
-      activeTabId={activeTabGroup}
-      onTabChange={handleTabChange}
-      flush={isFlush}
-      {docs}
-      {version}
-    />
-  {/if}
 
   <!-- Mobile Sidebar Overlay -->
   {#if sidebarOpen}
@@ -179,7 +167,7 @@
       </main>
     </div>
   {:else}
-    <main class="container mx-auto px-2 md:px-6 py-8">
+    <main class="container mx-auto px-2 md:px-6">
       <div class="flex">
         <!-- Desktop Sidebar - inside container -->
         <div class="hidden lg:block">
@@ -191,7 +179,7 @@
           />
         </div>
 
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 py-4">
           <div class="flex flex-col gap-2 px-2 md:px-8">
             <!-- Content -->
             {@render children()}

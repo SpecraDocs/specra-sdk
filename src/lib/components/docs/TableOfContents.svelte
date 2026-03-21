@@ -16,14 +16,7 @@
   const maxDepth = $derived(config.navigation?.tocMaxDepth ?? 3);
   const filteredItems = $derived(items.filter((item) => item.level <= maxDepth));
 
-  // Check if tab groups are configured
-  const hasTabGroups = $derived(
-    config.navigation?.tabGroups != null && config.navigation.tabGroups.length > 0
-  );
-
-  // Adjust top position based on whether tabs are present
-  const stickyTop = $derived(hasTabGroups ? 'top-[7.5rem]' : 'top-24');
-  const maxHeight = $derived(hasTabGroups ? 'max-h-[calc(100vh-10rem)]' : 'max-h-[calc(100vh-7rem)]');
+  // Removed hardcoded top/max-height — now uses --header-height CSS variable set by Header
 
   $effect(() => {
     if (!browser || !showToc || filteredItems.length === 0) return;
@@ -79,8 +72,8 @@
 </script>
 
 {#if showToc && filteredItems.length > 0}
-  <aside class="w-64 hidden xl:block shrink-0 sticky {stickyTop} self-start">
-    <div class="{maxHeight} overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50">
+  <aside class="w-64 hidden xl:block shrink-0 sticky self-start pt-4" style="top: var(--header-height, 4rem);">
+    <div class="overflow-y-auto bg-muted/30 dark:bg-muted/10 rounded-2xl p-4 border border-border/50" style="max-height: calc(100vh - var(--header-height, 4rem) - 2rem);">
       <h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">On this page</h3>
       <nav class="space-y-1">
         {#each filteredItems as item, index}

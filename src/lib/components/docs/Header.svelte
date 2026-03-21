@@ -3,10 +3,14 @@
   import { getConfigContext } from '$lib/stores/config.js';
   import { sidebarStore } from '$lib/stores/sidebar.js';
   import VersionSwitcher from './VersionSwitcher.svelte';
+  import VersionBanner from './VersionBanner.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import SearchModal from './SearchModal.svelte';
   import Logo from './Logo.svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
+  import type { BannerConfig } from '$lib/config.types.js';
+  import type { Snippet } from 'svelte';
+  import { browser } from '$app/environment';
 
   interface VersionMeta {
     id: string;
@@ -19,15 +23,42 @@
     currentVersion: string;
     versions: string[];
     versionsMeta?: VersionMeta[];
+    versionBanner?: BannerConfig;
     config?: SpecraConfig;
+    subheader?: Snippet;
   }
 
-  let { currentVersion, versions, versionsMeta, config: configProp }: Props = $props();
+  let { currentVersion, versions, versionsMeta, versionBanner, config: configProp, subheader }: Props = $props();
 
   const configStore = getConfigContext();
   let config = $derived(configProp || $configStore);
   let searchOpen = $state(false);
   let isFlush = $derived(config?.navigation?.sidebarStyle === 'flush');
+  let headerEl = $state<HTMLElement | null>(null);
+
+  // Set a CSS variable on :root with the header's actual height so sidebars
+  // can use it for their sticky top offset. Uses ResizeObserver to stay
+  // in sync when banner is dismissed or tabs change.
+  $effect(() => {
+    if (!browser || !headerEl) return;
+
+    function updateHeight() {
+      if (headerEl) {
+        const height = headerEl.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
+    }
+
+    // Set immediately to avoid flash of wrong position
+    updateHeight();
+    // Also set on next frame in case layout hasn't settled
+    requestAnimationFrame(updateHeight);
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(headerEl);
+
+    return () => observer.disconnect();
+  });
 
   $effect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,7 +72,7 @@
   });
 </script>
 
-<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+<header bind:this={headerEl} class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
   <div class="{isFlush ? '' : 'container mx-auto'} flex h-16 items-center justify-between px-4 md:px-6">
     <div class="flex items-center gap-1">
       <button
@@ -128,4 +159,12 @@
 
   <!-- Search Modal -->
   <SearchModal isOpen={searchOpen} onClose={() => (searchOpen = false)} {config} />
+
+  {#if versionBanner}
+    <VersionBanner banner={versionBanner} />
+  {/if}
+
+  {#if subheader}
+    {@render subheader()}
+  {/if}
 </header>

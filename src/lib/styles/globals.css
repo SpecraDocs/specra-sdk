@@ -147,6 +147,8 @@
     scroll-behavior: smooth;
     /* Always reserve space for scrollbar to prevent layout shift */
     scrollbar-gutter: stable;
+    /* Default header height — updated dynamically by Header component's ResizeObserver */
+    --header-height: 4rem;
   }
 
   body {

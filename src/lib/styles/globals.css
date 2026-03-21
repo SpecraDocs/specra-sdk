@@ -432,6 +432,60 @@ pre code {
   padding-inline-start: 1em;
 }
 
+/* Table styles - bordered with rounded corners matching CodeBlock/Callout */
+.prose :where(table):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.prose :where(thead):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  background: var(--muted);
+}
+
+.prose :where(thead th):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0.625rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--foreground);
+}
+
+.prose :where(thead th:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-right: none;
+}
+
+.prose :where(tbody td):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.prose :where(tbody td:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-right: none;
+}
+
+.prose :where(tbody tr:last-child td):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  border-bottom: none;
+}
+
+.prose :where(tbody tr:hover):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  background: oklch(0.97 0 0);
+}
+
+.dark .prose :where(tbody tr:hover):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  background: oklch(0.14 0 0);
+}
+
 html body[data-scroll-locked] {
   overflow: visible !important;
   margin-right: 0 !important;

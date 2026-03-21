@@ -441,7 +441,8 @@ pre code {
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   overflow: hidden;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   margin-top: 1rem;
   margin-bottom: 1rem;
   display: block;

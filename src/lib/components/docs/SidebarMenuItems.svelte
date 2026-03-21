@@ -50,7 +50,7 @@
   let { docs, version, onLinkClick, config, activeTabGroup }: Props = $props();
 
   let collapsed: Record<string, boolean> = $state({});
-  let pathname = $derived($page.url.pathname);
+  let pathname = $derived($page.url.pathname.replace(/\/$/, ''));
 
   // Filter docs by active tab group if tab groups are configured
   let hasTabGroups = $derived(

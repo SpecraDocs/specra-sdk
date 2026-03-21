@@ -151,9 +151,9 @@ export const CSP_DIRECTIVES = {
     "'unsafe-inline'", // Required for Next.js
     "'unsafe-eval'", // Required for dev mode - remove in production
   ],
-  "style-src": ["'self'", "'unsafe-inline'"], // Required for styled-components/emotion
+  "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
   "img-src": ["'self'", "data:", "https:"],
-  "font-src": ["'self'", "data:"],
+  "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
   "connect-src": ["'self'"],
   "frame-src": ["'self'"],
   "object-src": ["'none'"],

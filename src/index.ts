@@ -15,7 +15,7 @@
 export * from './lib/index.js'
 
 // Types
-export type { SpecraConfig, SiteConfig, NavigationConfig, ThemeConfig } from './lib/config.types.js'
+export type { SpecraConfig, SiteConfig, NavigationConfig, ThemeConfig, ProductConfig, Product, DefaultProductConfig } from './lib/config.types.js'
 export type { Doc, DocMeta, TocItem } from './lib/mdx.js'
 export type {
   ApiDocumentation,

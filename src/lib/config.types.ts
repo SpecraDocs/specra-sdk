@@ -32,6 +32,8 @@ export interface SiteConfig {
   hideLogo?: boolean
   /** Project ID to tie this doc site to a Specra project for visitor tracking */
   projectId?: string
+  /** Configuration for the default product in multi-product mode */
+  defaultProduct?: DefaultProductConfig
 }
 
 /**
@@ -85,6 +87,53 @@ export interface VersionConfig {
   banner?: BannerConfig
   /** Override tab groups for this version. Empty array = no tabs. */
   tabGroups?: TabGroup[]
+}
+
+/**
+ * Per-product configuration loaded from docs/{product}/_product_.json
+ * Products sit above versions in the config hierarchy.
+ */
+export interface ProductConfig {
+  /** Display name in the product switcher */
+  label: string
+  /** Icon identifier for the product dropdown (lucide icon name) */
+  icon?: string
+  /** Short description of the product */
+  description?: string
+  /** Default version for this product (overrides global site.activeVersion) */
+  activeVersion?: string
+  /** Badge text shown next to the product (e.g., "New", "Beta") */
+  badge?: string
+  /** Order in the product dropdown (lower = first) */
+  position?: number
+  /** Product-level tab group overrides */
+  tabGroups?: TabGroup[]
+}
+
+/**
+ * Resolved product with its slug and metadata.
+ * Returned by getProducts() — includes both filesystem identity and parsed config.
+ */
+export interface Product {
+  /** Filesystem directory name used in URLs (e.g., "api", "sdk") */
+  slug: string
+  /** Parsed product configuration from _product_.json */
+  config: ProductConfig
+  /** Whether this is the default product (bare version folders, no _product_.json) */
+  isDefault: boolean
+}
+
+/**
+ * Default product configuration in specra.config.json under site.defaultProduct.
+ * Used when the default product needs a custom label/icon instead of inheriting from site title.
+ */
+export interface DefaultProductConfig {
+  /** Display name for the default product in the switcher */
+  label?: string
+  /** Icon for the default product */
+  icon?: string
+  /** Override active version for the default product */
+  activeVersion?: string
 }
 
 /**

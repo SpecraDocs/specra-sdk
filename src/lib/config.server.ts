@@ -1,6 +1,6 @@
 import fs from "fs"
 import path from "path"
-import type { SpecraConfig, VersionConfig } from "./config.types"
+import type { SpecraConfig, VersionConfig, ProductConfig, Product } from "./config.types"
 import { defaultConfig } from "./config.types"
 
 /**
@@ -256,6 +256,165 @@ export function getVersionsMeta(versions: string[]): VersionMeta[] {
       banner: versionConfig?.banner,
     }
   })
+}
+
+// ─── Product Detection & Loading ─────────────────────────────────────────────
+
+/** Regex to detect version-like directory names (e.g., v1, v2.0.0) */
+const VERSION_PATTERN = /^v\d/
+
+/** Cache for product scanning */
+const productsCache = {
+  data: null as Product[] | null,
+  timestamp: 0,
+}
+
+const PCFG_TTL = process.env.NODE_ENV === 'development' ? 5000 : 60000
+
+/** Cache for individual product configs */
+const productConfigCache = new Map<string, { data: ProductConfig | null; timestamp: number }>()
+
+/**
+ * Load and parse a _product_.json file for a given product slug.
+ * Returns null if the file doesn't exist or is invalid.
+ */
+export function loadProductConfig(product: string): ProductConfig | null {
+  const cached = productConfigCache.get(product)
+  if (cached && Date.now() - cached.timestamp < PCFG_TTL) {
+    return cached.data
+  }
+
+  try {
+    const productConfigPath = path.join(process.cwd(), "docs", product, "_product_.json")
+    if (!fs.existsSync(productConfigPath)) {
+      productConfigCache.set(product, { data: null, timestamp: Date.now() })
+      return null
+    }
+    const content = fs.readFileSync(productConfigPath, "utf8")
+    const data = JSON.parse(content) as ProductConfig
+
+    if (!data.label) {
+      console.error(`[Specra] _product_.json in docs/${product}/ is missing required "label" field`)
+      productConfigCache.set(product, { data: null, timestamp: Date.now() })
+      return null
+    }
+
+    productConfigCache.set(product, { data, timestamp: Date.now() })
+    return data
+  } catch (error) {
+    console.error(`[Specra] Error loading _product_.json for ${product}:`, error)
+    productConfigCache.set(product, { data: null, timestamp: Date.now() })
+    return null
+  }
+}
+
+/**
+ * Scan docs/ top-level directories for _product_.json files.
+ * Returns the full list of products including the default product.
+ *
+ * Detection logic:
+ * 1. Single readdir + stat calls — no recursive walks
+ * 2. If no _product_.json found → single-product mode (returns empty array)
+ * 3. If any found → multi-product mode; bare version folders become the default product
+ * 4. Product slugs that match version patterns (e.g., v1.0.0) are rejected with a clear error
+ */
+export function scanProducts(): Product[] {
+  if (productsCache.data && Date.now() - productsCache.timestamp < PCFG_TTL) {
+    return productsCache.data
+  }
+
+  const docsDir = path.join(process.cwd(), "docs")
+  const products: Product[] = []
+  let hasExplicitProducts = false
+
+  try {
+    const entries = fs.readdirSync(docsDir, { withFileTypes: true })
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+
+      const productJsonPath = path.join(docsDir, entry.name, "_product_.json")
+      if (!fs.existsSync(productJsonPath)) continue
+
+      // Validate: product slugs must not look like version names
+      if (VERSION_PATTERN.test(entry.name)) {
+        console.error(
+          `[Specra] Invalid product directory "docs/${entry.name}/": ` +
+          `product slugs must not start with "v" followed by digits (looks like a version). ` +
+          `Rename the directory or remove _product_.json.`
+        )
+        continue
+      }
+
+      const config = loadProductConfig(entry.name)
+      if (config) {
+        hasExplicitProducts = true
+        products.push({
+          slug: entry.name,
+          config,
+          isDefault: false,
+        })
+      }
+    }
+  } catch (error) {
+    console.error("[Specra] Error scanning for products:", error)
+  }
+
+  // Only build a product list if explicit products were found
+  if (!hasExplicitProducts) {
+    productsCache.data = []
+    productsCache.timestamp = Date.now()
+    return []
+  }
+
+  // Add the default product (bare version folders)
+  const globalConfig = getConfig()
+  const defaultProductConfig = globalConfig.site?.defaultProduct
+  const defaultProduct: Product = {
+    slug: "_default_",
+    config: {
+      label: defaultProductConfig?.label || globalConfig.site?.title || "Docs",
+      icon: defaultProductConfig?.icon,
+      activeVersion: defaultProductConfig?.activeVersion || globalConfig.site?.activeVersion,
+      position: -1, // Default product always first
+    },
+    isDefault: true,
+  }
+
+  const allProducts = [defaultProduct, ...products]
+  // Sort by position (lower first), then alphabetically by label
+  allProducts.sort((a, b) => {
+    const posA = a.config.position ?? 999
+    const posB = b.config.position ?? 999
+    if (posA !== posB) return posA - posB
+    return a.config.label.localeCompare(b.config.label)
+  })
+
+  productsCache.data = allProducts
+  productsCache.timestamp = Date.now()
+  return allProducts
+}
+
+/**
+ * Get all products (cached). Returns empty array in single-product mode.
+ */
+export function getProducts(): Product[] {
+  return scanProducts()
+}
+
+/**
+ * Check if the site is in multi-product mode.
+ */
+export function isMultiProductMode(): boolean {
+  return getProducts().length > 0
+}
+
+/**
+ * Clear product-related caches. Called by file watchers when _product_.json changes.
+ */
+export function clearProductCaches(): void {
+  productsCache.data = null
+  productConfigCache.clear()
 }
 
 /**

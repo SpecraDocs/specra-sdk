@@ -9,6 +9,7 @@
 // Note: This file uses server-only APIs (fs, path) and should only be imported in Server Components
 import type { Doc } from './mdx'
 import { getVersions, getAllDocs, getDocBySlug } from './mdx'
+import { clearProductCaches } from './config.server'
 import { watch } from 'fs'
 import { join } from 'path'
 import { PerfTimer, logCacheOperation } from './dev-utils'
@@ -53,6 +54,12 @@ function initializeWatchers() {
 
       // Invalidate relevant caches when MDX or JSON files change
       if (filename.endsWith('.mdx') || filename.endsWith('.json')) {
+        // Clear product caches when _product_.json changes
+        if (filename.endsWith('_product_.json')) {
+          clearProductCaches()
+          console.log(`[MDX Cache] Product cache invalidated: ${filename}`)
+        }
+
         // Extract version from path
         const parts = filename.split(/[/\\]/)
         const version = parts[0]
@@ -72,6 +79,7 @@ function initializeWatchers() {
         // Clear versions cache if directory structure changed
         if (eventType === 'rename') {
           versionsCache.data = null
+          clearProductCaches()
         }
 
         console.log(`[MDX Cache] Invalidated cache for: ${filename}`)

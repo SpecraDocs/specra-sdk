@@ -29,12 +29,13 @@
   interface Props {
     docs: DocItem[];
     version: string;
+    product?: string;
     config: SpecraConfig;
     activeTabGroup?: string;
     onTabChange?: (tabId: string) => void;
   }
 
-  let { docs, version, config, activeTabGroup, onTabChange }: Props = $props();
+  let { docs, version, product, config, activeTabGroup, onTabChange }: Props = $props();
 
   let isOpen = $derived($sidebarStore);
 
@@ -113,6 +114,7 @@
       <SidebarMenuItems
         {docs}
         {version}
+        {product}
         {config}
         onLinkClick={handleClose}
         {activeTabGroup}

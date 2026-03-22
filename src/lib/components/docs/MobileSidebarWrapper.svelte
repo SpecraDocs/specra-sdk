@@ -31,11 +31,12 @@
     header: Snippet;
     docs: DocItem[];
     version: string;
+    product?: string;
     config: SpecraConfig;
     activeTabGroup?: string;
   }
 
-  let { header, docs, version, config, activeTabGroup }: Props = $props();
+  let { header, docs, version, product, config, activeTabGroup }: Props = $props();
 
   let sidebarOpen = $derived($sidebarStore);
 
@@ -113,6 +114,7 @@
       <SidebarMenuItems
         {docs}
         {version}
+        {product}
         {config}
         onLinkClick={closeSidebar}
         {activeTabGroup}

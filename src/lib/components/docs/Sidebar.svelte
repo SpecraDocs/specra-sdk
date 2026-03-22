@@ -26,12 +26,13 @@
   interface Props {
     docs: DocItem[];
     version: string;
+    product?: string;
     onLinkClick?: () => void;
     config: SpecraConfig;
     activeTabGroup?: string;
   }
 
-  let { docs, version, onLinkClick, config, activeTabGroup }: Props = $props();
+  let { docs, version, product, onLinkClick, config, activeTabGroup }: Props = $props();
 
   let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
   let containerClass = $derived(
@@ -53,6 +54,7 @@
       <SidebarMenuItems
         {docs}
         {version}
+        {product}
         {onLinkClick}
         {config}
         {activeTabGroup}

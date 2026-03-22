@@ -24,10 +24,17 @@
     mobileOnly?: boolean;
     docs?: DocItem[];
     version?: string;
+    product?: string;
     flush?: boolean;
   }
 
-  let { tabGroups, activeTabId, onTabChange, mobileOnly = false, docs, version, flush = false }: Props = $props();
+  let { tabGroups, activeTabId, onTabChange, mobileOnly = false, docs, version, product, flush = false }: Props = $props();
+
+  let docsBase = $derived(
+    product && product !== '_default_' && version
+      ? `/docs/${product}/${version}`
+      : version ? `/docs/${version}` : '/docs'
+  );
 
   let dropdownOpen = $state(false);
 
@@ -58,7 +65,7 @@
       });
 
       if (firstDocInTab) {
-        goto(`/docs/${version}/${firstDocInTab.slug}`);
+        goto(`${docsBase}/${firstDocInTab.slug}`);
       }
     }
   }

@@ -33,6 +33,7 @@
   interface Props {
     docs: DocItem[];
     version: string;
+    product?: string;
     config: SpecraConfig;
     activeTabGroup?: string;
     onTabChange?: (tabId: string) => void;
@@ -41,7 +42,7 @@
     children: Snippet;
   }
 
-  let { docs, version, config, activeTabGroup, onTabChange, header, toc, children }: Props = $props();
+  let { docs, version, product, config, activeTabGroup, onTabChange, header, toc, children }: Props = $props();
 
   let sidebarOpen = $derived($sidebarStore);
   let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
@@ -126,6 +127,7 @@
         <SidebarMenuItems
           {docs}
           {version}
+          {product}
           {config}
           onLinkClick={closeSidebar}
           {activeTabGroup}

@@ -6,9 +6,16 @@
     version: string;
     slug: string;
     title: string;
+    product?: string;
   }
 
-  let { version, slug, title }: Props = $props();
+  let { version, slug, title, product }: Props = $props();
+
+  let docsBase = $derived(
+    product && product !== '_default_'
+      ? `/docs/${product}/${version}`
+      : `/docs/${version}`
+  );
 
   const configStore = getConfigContext();
   let config = $derived($configStore);
@@ -24,7 +31,7 @@
     const potentialLocale = parts[0];
     const isLc = locales.includes(potentialLocale);
 
-    const homeHref = isLc ? `/docs/${version}/${potentialLocale}` : `/docs/${version}`;
+    const homeHref = isLc ? `${docsBase}/${potentialLocale}` : docsBase;
 
     const crumbs: Array<{ label: string; href: string }> = [
       { label: 'Docs', href: homeHref }
@@ -45,14 +52,14 @@
         label: part
           .replace(/-/g, ' ')
           .replace(/\b\w/g, (l) => l.toUpperCase()),
-        href: `/docs/${version}/${currentPath}`
+        href: `${docsBase}/${currentPath}`
       });
     }
 
     // Add current page
     crumbs.push({
       label: title,
-      href: `/docs/${version}/${slug}`
+      href: `${docsBase}/${slug}`
     });
 
     return crumbs;

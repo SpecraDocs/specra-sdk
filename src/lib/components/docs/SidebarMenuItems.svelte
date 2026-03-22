@@ -42,12 +42,20 @@
   interface Props {
     docs: DocItem[];
     version: string;
+    product?: string;
     onLinkClick?: () => void;
     config: SpecraConfig;
     activeTabGroup?: string;
   }
 
-  let { docs, version, onLinkClick, config, activeTabGroup }: Props = $props();
+  let { docs, version, product, onLinkClick, config, activeTabGroup }: Props = $props();
+
+  /** URL prefix: /docs/{product}/{version} for named products, /docs/{version} for default */
+  let docsBase = $derived(
+    product && product !== '_default_'
+      ? `/docs/${product}/${version}`
+      : `/docs/${version}`
+  );
 
   let collapsed: Record<string, boolean> = $state({});
   let pathname = $derived($page.url.pathname.replace(/\/$/, ''));
@@ -176,14 +184,14 @@
 
   function isActiveInGroup(group: SidebarGroup): boolean {
     const hasActiveItem = group.items.some(
-      (doc) => pathname === `/docs/${version}/${doc.slug}`
+      (doc) => pathname === `${docsBase}/${doc.slug}`
     );
     if (hasActiveItem) return true;
     return Object.values(group.children).some((child) => isActiveInGroup(child));
   }
 
   function getGroupHref(group: SidebarGroup): string {
-    let groupHref = `/docs/${version}/${group.path}`;
+    let groupHref = `${docsBase}/${group.path}`;
 
     if (config.features?.i18n) {
       const i18n = config.features.i18n;
@@ -192,7 +200,7 @@
       const potentialLocale = pathParts[3];
 
       if (potentialLocale && locales.includes(potentialLocale)) {
-        groupHref = `/docs/${version}/${potentialLocale}/${group.path}`;
+        groupHref = `${docsBase}/${potentialLocale}/${group.path}`;
       }
     }
 
@@ -201,7 +209,7 @@
 
   function isGroupCollapsed(groupKey: string, group: SidebarGroup): boolean {
     const hasActive = isActiveInGroup(group);
-    const isGroupActive = pathname === `/docs/${version}/${group.path}`;
+    const isGroupActive = pathname === `${docsBase}/${group.path}`;
     if (hasActive || isGroupActive) return false;
     return collapsed[groupKey] ?? group.defaultCollapsed;
   }
@@ -240,7 +248,7 @@
   {@const hasChildren = sortedChildren.length > 0}
   {@const hasItems = sortedItems.length > 0}
   {@const hasContent = hasChildren || hasItems}
-  {@const isGroupActive = pathname === `/docs/${version}/${group.path}`}
+  {@const isGroupActive = pathname === `${docsBase}/${group.path}`}
   {@const isCollapsed = isGroupCollapsed(groupKey, group)}
   {@const marginLeft = depth > 0 ? 'ml-4' : ''}
   {@const groupHref = getGroupHref(group)}
@@ -289,7 +297,7 @@
           {#if item.type === 'group'}
             {@render renderGroup(`${groupKey}/${item.key}`, item.group, depth + 1)}
           {:else}
-            {@const href = `/docs/${version}/${item.doc.slug}`}
+            {@const href = `${docsBase}/${item.doc.slug}`}
             {@const isActive = pathname === href}
             <a
               {href}
@@ -316,7 +324,7 @@
 <nav class="space-y-1">
   {#if sortedStandalone.length > 0}
     {#each sortedStandalone as doc (doc.slug)}
-      {@const href = `/docs/${version}/${doc.slug}`}
+      {@const href = `${docsBase}/${doc.slug}`}
       {@const isActive = pathname === href}
       <a
         {href}

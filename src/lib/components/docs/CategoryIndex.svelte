@@ -22,6 +22,7 @@
   interface Props {
     categoryPath: string;
     version: string;
+    product?: string;
     allDocs: DocItem[];
     title?: string;
     description?: string;
@@ -29,7 +30,7 @@
     config: SpecraConfig;
   }
 
-  let { categoryPath, version, allDocs, title, description, content, config }: Props = $props();
+  let { categoryPath, version, product, allDocs, title, description, content, config }: Props = $props();
 
   // Filter docs that belong to this category (direct children)
   const childDocs = $derived(() => {
@@ -51,7 +52,11 @@
       });
   });
 
-  const baseUrl = $derived(config.site?.baseUrl?.replace(/\/$/, '') || '');
+  const baseUrl = $derived(
+    product && product !== '_default_'
+      ? `/docs/${product}`
+      : (config.site?.baseUrl?.replace(/\/$/, '') || '')
+  );
 </script>
 
 <div class="space-y-8">

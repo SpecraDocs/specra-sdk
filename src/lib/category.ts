@@ -40,9 +40,11 @@ export function getCategoryConfig(folderPath: string): CategoryConfig | null {
 /**
  * Get all category configs for a version
  */
-export function getAllCategoryConfigs(version: string): Map<string, CategoryConfig> {
+export function getAllCategoryConfigs(version: string, product?: string): Map<string, CategoryConfig> {
   const configs = new Map<string, CategoryConfig>()
-  const versionDir = path.join(DOCS_DIR, version)
+  const versionDir = (product && product !== "_default_")
+    ? path.join(DOCS_DIR, product, version)
+    : path.join(DOCS_DIR, version)
 
   if (!fs.existsSync(versionDir)) {
     return configs

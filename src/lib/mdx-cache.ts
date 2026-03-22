@@ -100,12 +100,31 @@ function isCacheValid(timestamp: number): boolean {
 }
 
 /**
- * Cached version of getVersions()
+ * Cached version of getVersions().
+ * When product is provided, uses a separate cache key per product.
  */
-export function getCachedVersions(): string[] {
+const productVersionsCache = new Map<string, { data: string[]; timestamp: number }>()
+
+export function getCachedVersions(product?: string): string[] {
   // Initialize watchers on first use
   initializeWatchers()
 
+  // For product-scoped versions, use a separate cache
+  if (product && product !== "_default_") {
+    const cached = productVersionsCache.get(product)
+    if (cached && isCacheValid(cached.timestamp)) {
+      logCacheOperation('hit', `versions:${product}`)
+      return cached.data
+    }
+    logCacheOperation('miss', `versions:${product}`)
+    const timer = new PerfTimer(`getVersions(${product})`)
+    const versions = getVersions(product)
+    timer.end()
+    productVersionsCache.set(product, { data: versions, timestamp: Date.now() })
+    return versions
+  }
+
+  // Default product — original cache
   if (versionsCache.data && isCacheValid(versionsCache.timestamp)) {
     logCacheOperation('hit', 'versions')
     return versionsCache.data
@@ -125,11 +144,12 @@ export function getCachedVersions(): string[] {
 /**
  * Cached version of getAllDocs()
  */
-export async function getCachedAllDocs(version = 'v1.0.0', locale?: string): Promise<Doc[]> {
+export async function getCachedAllDocs(version = 'v1.0.0', locale?: string, product?: string): Promise<Doc[]> {
   // Initialize watchers on first use
   initializeWatchers()
 
-  const cacheKey = locale ? `${version}:${locale}` : version
+  const productKey = (product && product !== "_default_") ? product : "_default_"
+  const cacheKey = locale ? `${productKey}:${version}:${locale}` : `${productKey}:${version}`
   const cached = allDocsCache.get(cacheKey)
   if (cached && isCacheValid(cached.timestamp)) {
     logCacheOperation('hit', `getAllDocs:${cacheKey}`)
@@ -138,7 +158,7 @@ export async function getCachedAllDocs(version = 'v1.0.0', locale?: string): Pro
 
   logCacheOperation('miss', `getAllDocs:${cacheKey}`)
   const timer = new PerfTimer(`getAllDocs(${cacheKey})`)
-  const docs = await getAllDocs(version, locale)
+  const docs = await getAllDocs(version, locale, product)
   timer.end()
 
   allDocsCache.set(cacheKey, {
@@ -154,12 +174,14 @@ export async function getCachedAllDocs(version = 'v1.0.0', locale?: string): Pro
  */
 export async function getCachedDocBySlug(
   slug: string,
-  version = 'v1.0.0'
+  version = 'v1.0.0',
+  product?: string
 ): Promise<Doc | null> {
   // Initialize watchers on first use
   initializeWatchers()
 
-  const cacheKey = `${version}:${slug}`
+  const productKey = (product && product !== "_default_") ? product : "_default_"
+  const cacheKey = `${productKey}:${version}:${slug}`
   const cached = docBySlugCache.get(cacheKey)
 
   if (cached && isCacheValid(cached.timestamp)) {
@@ -169,7 +191,7 @@ export async function getCachedDocBySlug(
 
   logCacheOperation('miss', `getDocBySlug:${cacheKey}`)
   const timer = new PerfTimer(`getDocBySlug(${slug})`)
-  const doc = await getDocBySlug(slug, version)
+  const doc = await getDocBySlug(slug, version, undefined, product)
   timer.end()
 
   docBySlugCache.set(cacheKey, {
@@ -186,8 +208,10 @@ export async function getCachedDocBySlug(
  */
 export function clearAllCaches() {
   versionsCache.data = null
+  productVersionsCache.clear()
   allDocsCache.clear()
   docBySlugCache.clear()
+  clearProductCaches()
   console.log('[MDX Cache] All caches cleared')
 }
 

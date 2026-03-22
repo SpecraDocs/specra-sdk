@@ -177,48 +177,70 @@ export function reloadConfig(userConfig: Partial<SpecraConfig>): SpecraConfig {
 const versionConfigCache = new Map<string, { data: VersionConfig | null; timestamp: number }>()
 const VCFG_TTL = process.env.NODE_ENV === 'development' ? 5000 : 60000
 
-export function loadVersionConfig(version: string): VersionConfig | null {
-  const cached = versionConfigCache.get(version)
+export function loadVersionConfig(version: string, product?: string): VersionConfig | null {
+  const cacheKey = product && product !== "_default_" ? `${product}:${version}` : version
+  const cached = versionConfigCache.get(cacheKey)
   if (cached && Date.now() - cached.timestamp < VCFG_TTL) {
     return cached.data
   }
 
   try {
-    const versionConfigPath = path.join(process.cwd(), "docs", version, "_version_.json")
+    const basePath = (product && product !== "_default_")
+      ? path.join(process.cwd(), "docs", product, version)
+      : path.join(process.cwd(), "docs", version)
+    const versionConfigPath = path.join(basePath, "_version_.json")
     if (!fs.existsSync(versionConfigPath)) {
-      versionConfigCache.set(version, { data: null, timestamp: Date.now() })
+      versionConfigCache.set(cacheKey, { data: null, timestamp: Date.now() })
       return null
     }
     const content = fs.readFileSync(versionConfigPath, "utf8")
     const data = JSON.parse(content) as VersionConfig
-    versionConfigCache.set(version, { data, timestamp: Date.now() })
+    versionConfigCache.set(cacheKey, { data, timestamp: Date.now() })
     return data
   } catch (error) {
-    console.error(`Error loading _version_.json for ${version}:`, error)
-    versionConfigCache.set(version, { data: null, timestamp: Date.now() })
+    console.error(`Error loading _version_.json for ${cacheKey}:`, error)
+    versionConfigCache.set(cacheKey, { data: null, timestamp: Date.now() })
     return null
   }
 }
 
 /**
- * Get the effective config for a specific version.
- * Merges global config with per-version overrides from _version_.json.
- * If no _version_.json exists, returns the global config unchanged.
+ * Get the effective config for a specific version and optional product.
+ * Merges in priority order: global ← product ← version.
+ * If no overrides exist, returns the global config unchanged.
  */
-export function getEffectiveConfig(version: string): SpecraConfig {
+export function getEffectiveConfig(version: string, product?: string): SpecraConfig {
   const globalConfig = getConfig()
-  const versionConfig = loadVersionConfig(version)
+  let effective = { ...globalConfig }
 
-  if (!versionConfig) {
-    return globalConfig
+  // Layer 2: Product config overrides
+  if (product && product !== "_default_") {
+    const productConfig = loadProductConfig(product)
+    if (productConfig) {
+      if (productConfig.tabGroups !== undefined) {
+        effective.navigation = {
+          ...effective.navigation,
+          tabGroups: productConfig.tabGroups,
+        }
+      }
+      // Product's activeVersion overrides global
+      if (productConfig.activeVersion) {
+        effective.site = {
+          ...effective.site,
+          activeVersion: productConfig.activeVersion,
+        }
+      }
+    }
   }
 
-  const effective = { ...globalConfig }
-
-  if (versionConfig.tabGroups !== undefined) {
-    effective.navigation = {
-      ...effective.navigation,
-      tabGroups: versionConfig.tabGroups,
+  // Layer 3: Version config overrides (highest priority)
+  const versionConfig = loadVersionConfig(version, product)
+  if (versionConfig) {
+    if (versionConfig.tabGroups !== undefined) {
+      effective.navigation = {
+        ...effective.navigation,
+        tabGroups: versionConfig.tabGroups,
+      }
     }
   }
 
@@ -245,9 +267,9 @@ export interface VersionMeta {
  * Get metadata for all versions, enriched with _version_.json data.
  * Hidden versions are included but marked — the UI decides whether to show them.
  */
-export function getVersionsMeta(versions: string[]): VersionMeta[] {
+export function getVersionsMeta(versions: string[], product?: string): VersionMeta[] {
   return versions.map(id => {
-    const versionConfig = loadVersionConfig(id)
+    const versionConfig = loadVersionConfig(id, product)
     return {
       id,
       label: versionConfig?.label || id,

@@ -20,6 +20,18 @@ import type { I18nConfig } from "./config.types"
 const DOCS_DIR = path.join(process.cwd(), "docs")
 
 /**
+ * Resolve the docs directory for a given version and optional product.
+ * - Default product or omitted: docs/{version}/
+ * - Named product: docs/{product}/{version}/
+ */
+function resolveDocsPath(version: string, product?: string): string {
+  if (product && product !== "_default_") {
+    return path.join(DOCS_DIR, product, version)
+  }
+  return path.join(DOCS_DIR, version)
+}
+
+/**
  * Structured node type for MDX content rendering.
  * Used to pass a JSON-serializable tree from server to client,
  * allowing the client-side recursive renderer to instantiate
@@ -1078,13 +1090,32 @@ export interface TocItem {
   level: number
 }
 
-export function getVersions(): string[] {
+export function getVersions(product?: string): string[] {
   try {
-    const versions = fs.readdirSync(DOCS_DIR)
-    return versions.filter((v) => fs.statSync(path.join(DOCS_DIR, v)).isDirectory())
+    const baseDir = (product && product !== "_default_")
+      ? path.join(DOCS_DIR, product)
+      : DOCS_DIR
+    const entries = fs.readdirSync(baseDir)
+    return entries.filter((v) => {
+      if (!fs.statSync(path.join(baseDir, v)).isDirectory()) return false
+      // In the default product's base dir, skip product directories (those with _product_.json)
+      if (!product || product === "_default_") {
+        const hasProductJson = fs.existsSync(path.join(baseDir, v, "_product_.json"))
+        if (hasProductJson) return false
+      }
+      return true
+    })
   } catch (error) {
     return ["v1.0.0"]
   }
+}
+
+/**
+ * Get versions scoped to a specific product.
+ * Convenience wrapper around getVersions() for product-aware code.
+ */
+export function getProductVersions(product: string): string[] {
+  return getVersions(product)
 }
 
 /**
@@ -1205,7 +1236,7 @@ export function getI18nConfig(): I18nConfig | null {
   return i18n
 }
 
-export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: string): Promise<Doc | null> {
+export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: string, product?: string): Promise<Doc | null> {
   try {
     // Security: Sanitize and validate slug
     const sanitizedVersion = sanitizePath(version)
@@ -1233,8 +1264,8 @@ export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: st
     // 1. Localized extension: slug.locale.mdx (e.g. guide.fr.mdx)
     // 2. Default file: slug.mdx (only if using default locale and configured to fallback or strictly default)
 
-    // Construct potential paths
-    const basePath = path.join(DOCS_DIR, sanitizedVersion)
+    // Construct potential paths — product-aware
+    const basePath = resolveDocsPath(sanitizedVersion, product)
 
     let result: Doc | null = null
 
@@ -1279,9 +1310,9 @@ export async function getDocBySlug(slug: string, version = "v1.0.0", locale?: st
   }
 }
 
-export function getAllDocs(version = "v1.0.0", locale?: string): Doc[] {
+export function getAllDocs(version = "v1.0.0", locale?: string, product?: string): Doc[] {
   try {
-    const versionDir = path.join(DOCS_DIR, version)
+    const versionDir = resolveDocsPath(version, product)
 
     if (!fs.existsSync(versionDir)) {
       return []
@@ -1292,7 +1323,7 @@ export function getAllDocs(version = "v1.0.0", locale?: string): Doc[] {
     const targetLocale = locale || i18nConfig?.defaultLocale || 'en'
 
     const mdxFiles = findMdxFiles(versionDir)
-    const categoryConfigs = getAllCategoryConfigs(version)
+    const categoryConfigs = getAllCategoryConfigs(version, product)
 
     const docs = mdxFiles.map((file) => {
         // file contains path relative to version dir, e.g. "getting-started/intro.mdx" or "intro.fr.mdx"

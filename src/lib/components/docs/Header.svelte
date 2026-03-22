@@ -3,6 +3,7 @@
   import { getConfigContext } from '$lib/stores/config.js';
   import { sidebarStore } from '$lib/stores/sidebar.js';
   import VersionSwitcher from './VersionSwitcher.svelte';
+  import ProductSwitcher from './ProductSwitcher.svelte';
   import VersionBanner from './VersionBanner.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import SearchModal from './SearchModal.svelte';
@@ -20,16 +21,27 @@
     hidden?: boolean;
   }
 
+  interface ProductItem {
+    slug: string;
+    label: string;
+    icon?: string;
+    badge?: string;
+    activeVersion?: string;
+    isDefault: boolean;
+  }
+
   interface Props {
     currentVersion: string;
     versions: string[];
     versionsMeta?: VersionMeta[];
     versionBanner?: BannerConfig;
     config?: SpecraConfig;
+    products?: ProductItem[];
+    currentProduct?: string;
     subheader?: Snippet;
   }
 
-  let { currentVersion, versions, versionsMeta, versionBanner, config: configProp, subheader }: Props = $props();
+  let { currentVersion, versions, versionsMeta, versionBanner, config: configProp, products, currentProduct, subheader }: Props = $props();
 
   const configStore = getConfigContext();
   let config = $derived(configProp || $configStore);
@@ -113,6 +125,10 @@
             ⌘K
           </kbd>
         </button>
+      {/if}
+
+      {#if products && products.length > 1}
+        <ProductSwitcher {products} {currentProduct} />
       {/if}
 
       {#if config.features?.versioning}

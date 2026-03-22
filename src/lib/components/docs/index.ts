@@ -52,6 +52,7 @@ export { default as TimelineItem } from './TimelineItem.svelte';
 export { default as Tabs } from './Tabs.svelte';
 export { default as ThemeToggle } from './ThemeToggle.svelte';
 export { default as Tooltip } from './Tooltip.svelte';
+export { default as ProductSwitcher } from './ProductSwitcher.svelte';
 export { default as VersionBanner } from './VersionBanner.svelte';
 export { default as VersionSwitcher } from './VersionSwitcher.svelte';
 export { default as Video } from './Video.svelte';

@@ -55,7 +55,7 @@
   const baseUrl = $derived(
     product && product !== '_default_'
       ? `/docs/${product}`
-      : (config.site?.baseUrl?.replace(/\/$/, '') || '')
+      : '/docs'
   );
 </script>
 

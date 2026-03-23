@@ -55,7 +55,13 @@ export function specraConfig(options = {}) {
       mdsvex(specraMdsvexConfig(options.mdsvex || {}))
     ],
     kit: {
-      ...(options.kit || {})
+      ...options.kit,
+      prerender: {
+        handleHttpError: 'warn',
+        handleMissingId: 'warn',
+        handleUnseenRoutes: 'warn',
+        ...(options.kit?.prerender || {})
+      }
     }
   }
 }

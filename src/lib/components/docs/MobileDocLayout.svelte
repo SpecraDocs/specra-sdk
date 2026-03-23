@@ -42,7 +42,7 @@
     children: Snippet;
   }
 
-  let { docs, version, product, config, activeTabGroup, onTabChange, header, toc, children }: Props = $props();
+  let { docs = [], version, product, config, activeTabGroup, onTabChange, header, toc, children }: Props = $props();
 
   let sidebarOpen = $derived($sidebarStore);
   let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
@@ -144,6 +144,7 @@
         <Sidebar
           {docs}
           {version}
+          {product}
           {config}
           {activeTabGroup}
         />
@@ -176,6 +177,7 @@
           <Sidebar
             {docs}
             {version}
+            {product}
             {config}
             {activeTabGroup}
           />

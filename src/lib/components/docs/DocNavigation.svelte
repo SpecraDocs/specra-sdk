@@ -10,16 +10,23 @@
     previousDoc?: NavDoc;
     nextDoc?: NavDoc;
     version: string;
+    product?: string;
   }
 
-  let { previousDoc, nextDoc, version }: Props = $props();
+  let { previousDoc, nextDoc, version, product }: Props = $props();
+
+  let docsBase = $derived(
+    product && product !== '_default_'
+      ? `/docs/${product}/${version}`
+      : `/docs/${version}`
+  );
 </script>
 
 {#if previousDoc || nextDoc}
   <div class="mt-12 pt-8 border-t border-border grid grid-cols-2 gap-4">
     {#if previousDoc}
       <a
-        href="/docs/{version}/{previousDoc.slug}"
+        href="{docsBase}/{previousDoc.slug}"
         class="group flex flex-col gap-2 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all"
         style="text-decoration: none !important;"
       >
@@ -37,7 +44,7 @@
 
     {#if nextDoc}
       <a
-        href="/docs/{version}/{nextDoc.slug}"
+        href="{docsBase}/{nextDoc.slug}"
         class="group flex flex-col gap-2 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all text-right"
         style="text-decoration: none !important;"
       >

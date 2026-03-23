@@ -48,7 +48,7 @@
     activeTabGroup?: string;
   }
 
-  let { docs, version, product, onLinkClick, config, activeTabGroup }: Props = $props();
+  let { docs = [], version, product, onLinkClick, config, activeTabGroup }: Props = $props();
 
   /** URL prefix: /docs/{product}/{version} for named products, /docs/{version} for default */
   let docsBase = $derived(

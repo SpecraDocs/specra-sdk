@@ -35,7 +35,7 @@
     onTabChange?: (tabId: string) => void;
   }
 
-  let { docs, version, product, config, activeTabGroup, onTabChange }: Props = $props();
+  let { docs = [], version, product, config, activeTabGroup, onTabChange }: Props = $props();
 
   let isOpen = $derived($sidebarStore);
 

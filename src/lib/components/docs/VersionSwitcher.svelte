@@ -27,7 +27,7 @@
     if (versionsMeta && versionsMeta.length > 0) {
       return versionsMeta.filter(v => !v.hidden);
     }
-    return versions.map(id => ({ id, label: id }));
+    return (versions ?? []).map(id => ({ id, label: id }));
   });
 
   // Get current version display label

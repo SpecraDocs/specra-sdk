@@ -32,20 +32,21 @@
     nextDoc?: NavDoc;
     version: string;
     slug: string;
+    product?: string;
     config: SpecraConfig;
     children: Snippet;
   }
 
-  let { meta, previousDoc, nextDoc, version, slug, config, children }: Props = $props();
+  let { meta, previousDoc, nextDoc, version, slug, product, config, children }: Props = $props();
 
   let isDevelopment = $derived(dev);
 
-  // Build edit URL if configured
-  let editUrl = $derived(
-    config.features?.editUrl && typeof config.features.editUrl === 'string'
-      ? `${config.features.editUrl}/${version}/${slug}.mdx`
-      : null
-  );
+  // Build edit URL if configured — include product prefix for non-default products
+  let editUrl = $derived.by(() => {
+    if (!config.features?.editUrl || typeof config.features.editUrl !== 'string') return null;
+    const productPrefix = product && product !== '_default_' ? `${product}/` : '';
+    return `${config.features.editUrl}/${productPrefix}${version}/${slug}.mdx`;
+  });
 </script>
 
 <article class="flex-1 min-w-0">
@@ -103,5 +104,5 @@
     </div>
   {/if}
 
-  <DocNavigation {previousDoc} {nextDoc} {version} />
+  <DocNavigation {previousDoc} {nextDoc} {version} {product} />
 </article>

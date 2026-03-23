@@ -4,7 +4,8 @@
   import { browser } from '$app/environment';
   import Icon from './Icon.svelte';
 
-  interface ProductItem {
+  /** Flat shape (from page components) */
+  interface ProductItemFlat {
     slug: string;
     label: string;
     icon?: string;
@@ -13,25 +14,56 @@
     isDefault: boolean;
   }
 
+  /** Nested shape (from SDK getProducts()) */
+  interface ProductItemNested {
+    slug: string;
+    config: {
+      label: string;
+      icon?: string;
+      badge?: string;
+      activeVersion?: string;
+    };
+    isDefault: boolean;
+  }
+
+  type ProductInput = ProductItemFlat | ProductItemNested;
+
   interface Props {
-    products: ProductItem[];
+    products: ProductInput[];
     currentProduct?: string;
   }
 
   let { products, currentProduct }: Props = $props();
 
+  /** Normalize either shape to flat */
+  function normalize(p: ProductInput): ProductItemFlat {
+    if ('config' in p && p.config) {
+      return {
+        slug: p.slug,
+        label: p.config.label,
+        icon: p.config.icon,
+        badge: p.config.badge,
+        activeVersion: p.config.activeVersion,
+        isDefault: p.isDefault,
+      };
+    }
+    return p as ProductItemFlat;
+  }
+
+  let normalizedProducts = $derived(products.map(normalize));
+
   let isOpen = $state(false);
   let dropdownEl = $state<HTMLDivElement | null>(null);
 
   let currentLabel = $derived.by(() => {
-    const product = products.find(p =>
+    const product = normalizedProducts.find(p =>
       currentProduct ? p.slug === currentProduct : p.isDefault
     );
     return product?.label || 'Docs';
   });
 
   let currentIcon = $derived.by(() => {
-    const product = products.find(p =>
+    const product = normalizedProducts.find(p =>
       currentProduct ? p.slug === currentProduct : p.isDefault
     );
     return product?.icon;
@@ -61,7 +93,7 @@
     };
   });
 
-  function switchProduct(product: ProductItem) {
+  function switchProduct(product: ProductItemFlat) {
     const isCurrentProduct = currentProduct
       ? product.slug === currentProduct
       : product.isDefault;
@@ -81,7 +113,7 @@
     }
   }
 
-  function isCurrentProductItem(product: ProductItem): boolean {
+  function isCurrentProductItem(product: ProductItemFlat): boolean {
     return currentProduct
       ? product.slug === currentProduct
       : product.isDefault;
@@ -110,7 +142,7 @@
         role="listbox"
         aria-label="Available products"
       >
-        {#each products as product}
+        {#each normalizedProducts as product}
           <button
             role="option"
             aria-selected={isCurrentProductItem(product)}

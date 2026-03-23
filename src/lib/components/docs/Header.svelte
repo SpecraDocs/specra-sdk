@@ -41,7 +41,7 @@
     subheader?: Snippet;
   }
 
-  let { currentVersion, versions, versionsMeta, versionBanner, config: configProp, products, currentProduct, subheader }: Props = $props();
+  let { currentVersion, versions = [], versionsMeta, versionBanner, config: configProp, products, currentProduct, subheader }: Props = $props();
 
   const configStore = getConfigContext();
   let config = $derived(configProp || $configStore);

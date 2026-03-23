@@ -32,7 +32,7 @@
     activeTabGroup?: string;
   }
 
-  let { docs, version, product, onLinkClick, config, activeTabGroup }: Props = $props();
+  let { docs = [], version, product, onLinkClick, config, activeTabGroup }: Props = $props();
 
   let isFlush = $derived(config.navigation?.sidebarStyle === 'flush');
   let containerClass = $derived(

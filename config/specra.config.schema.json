@@ -67,6 +67,25 @@
       ],
       "type": "object"
     },
+    "DefaultProductConfig": {
+      "additionalProperties": false,
+      "description": "Default product configuration in specra.config.json under site.defaultProduct. Used when the default product needs a custom label/icon instead of inheriting from site title.",
+      "properties": {
+        "activeVersion": {
+          "description": "Override active version for the default product",
+          "type": "string"
+        },
+        "icon": {
+          "description": "Icon for the default product",
+          "type": "string"
+        },
+        "label": {
+          "description": "Display name for the default product in the switcher",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "DeploymentConfig": {
       "additionalProperties": false,
       "description": "Deployment configuration for different hosting scenarios",
@@ -409,6 +428,10 @@
         "baseUrl": {
           "description": "Base URL path for the documentation (e.g., '/docs')",
           "type": "string"
+        },
+        "defaultProduct": {
+          "$ref": "#/definitions/DefaultProductConfig",
+          "description": "Configuration for the default product in multi-product mode"
         },
         "description": {
           "description": "Short description of the documentation",

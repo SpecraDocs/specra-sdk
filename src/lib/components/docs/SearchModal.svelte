@@ -28,7 +28,8 @@
   let inputEl = $state<HTMLInputElement | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const baseUrl = $derived(config.site?.baseUrl || '/');
+  const siteBaseUrl = $derived(config.site?.baseUrl || '/');
+  const docsBaseUrl = '/docs';
 
   $effect(() => {
     if (isOpen && inputEl) {
@@ -75,7 +76,7 @@
     debounceTimer = setTimeout(async () => {
       try {
         const response = await fetch(
-          `${baseUrl.replace(/\/$/, '')}/api/search?q=${encodeURIComponent(value.trim())}`
+          `${siteBaseUrl.replace(/\/$/, '')}/api/search?q=${encodeURIComponent(value.trim())}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -93,7 +94,7 @@
 
   function navigateToResult(result: SearchResult) {
     const version = result.version || config.site?.activeVersion || 'v1';
-    const url = `${baseUrl.replace(/\/$/, '')}/${version}/${result.slug}`;
+    const url = `${docsBaseUrl}/${version}/${result.slug}`;
     goto(url);
     onClose();
   }

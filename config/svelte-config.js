@@ -17,6 +17,8 @@ import remarkMath from 'remark-math'
 import rehypeSlug from 'rehype-slug'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
+import fs from 'fs'
+import path from 'path'
 
 /**
  * Get mdsvex preprocessor config with all Specra remark/rehype plugins
@@ -43,10 +45,32 @@ export function specraMdsvexConfig(options = {}) {
 }
 
 /**
+ * Scan the docs/ directory and return prerender entries for all version root pages.
+ * This ensures adapter-static discovers and prerenders every version, not just the active one.
+ */
+function discoverVersionEntries(docsDir = path.join(process.cwd(), 'docs')) {
+  const entries = ['/']
+  try {
+    if (!fs.existsSync(docsDir)) return entries
+
+    const items = fs.readdirSync(docsDir, { withFileTypes: true })
+    for (const item of items) {
+      if (item.isDirectory() && /^v\d/.test(item.name)) {
+        entries.push(`/docs/${item.name}`)
+      }
+    }
+  } catch {
+    // Ignore errors — fall back to just '/'
+  }
+  return entries
+}
+
+/**
  * Create a full SvelteKit config with Specra defaults
  */
 export function specraConfig(options = {}) {
   const { vitePreprocess } = options.vitePreprocess || {}
+  const userPrerender = options.kit?.prerender || {}
 
   return {
     extensions: ['.svelte', '.md', '.svx', '.mdx'],
@@ -60,7 +84,8 @@ export function specraConfig(options = {}) {
         handleHttpError: 'warn',
         handleMissingId: 'warn',
         handleUnseenRoutes: 'warn',
-        ...(options.kit?.prerender || {})
+        entries: discoverVersionEntries(),
+        ...userPrerender,
       }
     }
   }

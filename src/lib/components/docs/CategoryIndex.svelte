@@ -57,6 +57,10 @@
       ? `/docs/${product}`
       : '/docs'
   );
+
+  // Note: We always use '/docs' as the base for non-product routes.
+  // Do NOT use config.site?.baseUrl here — that field (e.g. "/") refers to
+  // the site root, not the docs route prefix.
 </script>
 
 <div class="space-y-8">

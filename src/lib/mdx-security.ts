@@ -55,25 +55,26 @@ export function validatePathWithinDirectory(filePath: string, allowedDir: string
  * These patterns can execute arbitrary code during SSR
  */
 const DANGEROUS_PATTERNS = [
-  // JavaScript execution
-  /eval\s*\(/gi,
-  /Function\s*\(/gi,
-  /import\s*\(/gi,
-  /require\s*\(/gi,
+  // JavaScript execution — require expression context (after { ; = or line start)
+  // to avoid false positives on prose like "bulk import (CSV...)" or "fetch (data)"
+  /(?:^|[{;=,])\s*eval\s*\(/gim,
+  /(?:^|[{;=,])\s*Function\s*\(/gim,
+  /(?:^|[{;=,])\s*import\s*\(/gim,
+  /(?:^|[{;=,])\s*require\s*\(/gim,
 
   // File system access
   /fs\.[a-z]+/gi,
-  /readFile/gi,
-  /writeFile/gi,
+  /(?:^|[{;=,])\s*readFile/gim,
+  /(?:^|[{;=,])\s*writeFile/gim,
   /process\.env/gi,
 
-  // Network requests during SSR (legitimate client-side usage should use components)
-  /fetch\s*\(/gi,
+  // Network requests during SSR — require expression context
+  /(?:^|[{;=,])\s*fetch\s*\(/gim,
 
   // Dangerous Node.js modules
   /child_process/gi,
-  /exec\s*\(/gi,
-  /spawn\s*\(/gi,
+  /(?:^|[{;=,])\s*exec\s*\(/gim,
+  /(?:^|[{;=,])\s*spawn\s*\(/gim,
 
   // Script tag injection
   /<script[>\s]/gi,

@@ -391,7 +391,19 @@ function parseJsxExpression(expr: string): any {
     try {
       return JSON.parse(trimmed)
     } catch {
-      return trimmed
+      // Convert JS object notation inside arrays to JSON
+      const jsonStr = trimmed.replace(
+        /(\w+)\s*:/g,
+        '"$1":'
+      ).replace(
+        /:\s*'([^']*)'/g,
+        ': "$1"'
+      )
+      try {
+        return JSON.parse(jsonStr)
+      } catch {
+        return trimmed
+      }
     }
   }
 

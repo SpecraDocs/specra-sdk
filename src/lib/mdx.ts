@@ -481,6 +481,63 @@ function extractCodeBlockProps(node: any): { code: string; language: string; fil
 }
 
 /**
+ * Detect GitHub-style alert blockquotes: > [!WARNING] content
+ * Returns the alert type and remaining content children, or null if not an alert.
+ */
+const ALERT_TYPE_MAP: Record<string, string> = {
+  NOTE: 'note',
+  TIP: 'tip',
+  IMPORTANT: 'info',
+  WARNING: 'warning',
+  CAUTION: 'danger',
+  INFO: 'info',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  DANGER: 'danger',
+}
+
+function extractBlockquoteAlert(node: any): { type: string; contentChildren: any[] } | null {
+  if (node.type !== 'element' || node.tagName !== 'blockquote') return null
+  if (!node.children || node.children.length === 0) return null
+
+  // Find the first paragraph child
+  const firstP = node.children.find((c: any) => c.type === 'element' && c.tagName === 'p')
+  if (!firstP || !firstP.children || firstP.children.length === 0) return null
+
+  // Check first text node for [!TYPE] pattern
+  const firstText = firstP.children[0]
+  if (firstText.type !== 'text') return null
+
+  const match = firstText.value.match(/^\s*\[!(\w+)\]\s*\n?/)
+  if (!match) return null
+
+  const alertType = ALERT_TYPE_MAP[match[1].toUpperCase()]
+  if (!alertType) return null
+
+  // Build remaining content: modify the first paragraph to remove the alert marker
+  const remainingFirstPChildren = [...firstP.children]
+  const remainingText = firstText.value.slice(match[0].length)
+  if (remainingText.trim()) {
+    remainingFirstPChildren[0] = { ...firstText, value: remainingText }
+  } else {
+    remainingFirstPChildren.shift()
+  }
+
+  const contentChildren: any[] = []
+  if (remainingFirstPChildren.length > 0) {
+    contentChildren.push({ ...firstP, children: remainingFirstPChildren })
+  }
+  // Add any remaining blockquote children (paragraphs after the first)
+  for (const child of node.children) {
+    if (child !== firstP) {
+      contentChildren.push(child)
+    }
+  }
+
+  return { type: alertType, contentChildren }
+}
+
+/**
  * Recursively extract text content from a hast node.
  */
 function extractTextContent(node: any): string {
@@ -747,6 +804,19 @@ async function hastChildrenToMdxNodes(children: any[]): Promise<MdxNode[]> {
         name: componentName,
         props,
         children: childNodes,
+      })
+    } else if (extractBlockquoteAlert(child)) {
+      // GitHub-style alert blockquotes: > [!WARNING] content
+      flushHtmlBuffer()
+      const alert = extractBlockquoteAlert(child)!
+      const contentNodes = alert.contentChildren.length > 0
+        ? await hastChildrenToMdxNodes(alert.contentChildren)
+        : []
+      nodes.push({
+        type: 'component',
+        name: 'Callout',
+        props: { type: alert.type },
+        children: contentNodes,
       })
     } else {
       // Check if this regular element contains any component elements nested within

@@ -119,12 +119,10 @@ export function buildSidebarStructure<T extends {
         }
       }
       if (isIndexFile) {
-        // Use categoryPosition if available (from _category_.json), otherwise sidebar_position from frontmatter
         rootGroups[groupName].position = doc.categoryPosition ?? doc.meta.sidebar_position ?? 999
         rootGroups[groupName].icon = doc.categoryIcon
-      } else {
-        rootGroups[groupName].items.push(doc)
       }
+      rootGroups[groupName].items.push(doc)
       return
     }
 
@@ -170,17 +168,14 @@ export function buildSidebarStructure<T extends {
             if (doc.categoryCollapsed !== undefined) {
               currentLevel[folder].defaultCollapsed = doc.categoryCollapsed
             }
-          } else {
-            currentLevel[folder].items.push(doc)
           }
+          currentLevel[folder].items.push(doc)
         }
 
         currentLevel = currentLevel[folder].children
       }
     } else {
-      if (!isIndexFile) {
-        standalone.push(doc)
-      }
+      standalone.push(doc)
     }
   })
 

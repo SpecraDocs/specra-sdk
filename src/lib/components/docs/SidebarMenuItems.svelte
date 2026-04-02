@@ -134,9 +134,8 @@
         if (isIndexFile) {
           rootGroups[groupName].position = doc.sidebar_position ?? 999;
           rootGroups[groupName].icon = doc.categoryIcon;
-        } else {
-          rootGroups[groupName].items.push(doc);
         }
+        rootGroups[groupName].items.push(doc);
         return;
       }
 
@@ -179,17 +178,14 @@
               if (doc.categoryIcon) {
                 currentLevel[folder].icon = doc.categoryIcon;
               }
-            } else {
-              currentLevel[folder].items.push(doc);
             }
+            currentLevel[folder].items.push(doc);
           }
 
           currentLevel = currentLevel[folder].children;
         }
       } else {
-        if (!isIndexFile) {
-          standalone.push(doc);
-        }
+        standalone.push(doc);
       }
     });
 

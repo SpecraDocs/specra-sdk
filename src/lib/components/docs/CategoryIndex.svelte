@@ -42,8 +42,8 @@
         // Match direct children of this category path
         if (!docPath.startsWith(categoryPath + '/')) return false;
         const remaining = docPath.slice(categoryPath.length + 1);
-        // Only direct children (no further slashes, or is an index)
-        return !remaining.includes('/') && remaining !== 'index';
+        // Only direct children (no further slashes)
+        return !remaining.includes('/');
       })
       .sort((a, b) => {
         const posA = a.meta?.sidebar_position ?? 999;

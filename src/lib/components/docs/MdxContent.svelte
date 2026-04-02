@@ -1,14 +1,7 @@
 <script lang="ts">
   import MdxContent from './MdxContent.svelte';
   import type { Component } from 'svelte';
-
-  interface MdxNode {
-    type: 'html' | 'component';
-    content?: string;
-    name?: string;
-    props?: Record<string, any>;
-    children?: MdxNode[];
-  }
+  import type { MdxNode } from '$lib/mdx.js';
 
   interface Props {
     nodes: MdxNode[];

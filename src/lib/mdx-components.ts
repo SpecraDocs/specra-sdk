@@ -14,6 +14,7 @@
  * ```
  */
 
+import type { Component } from 'svelte';
 import {
   Callout,
   Accordion,
@@ -82,7 +83,7 @@ export {
 /**
  * Component map for passing to layout components that render MDX content.
  */
-export const mdxComponents = {
+export const mdxComponents: Record<string, Component> = {
   Callout,
   Accordion,
   AccordionItem,

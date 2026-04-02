@@ -1,0 +1,70 @@
+{
+  "$ref": "#/definitions/ProductConfig",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ProductConfig": {
+      "additionalProperties": false,
+      "description": "Per-product configuration loaded from docs/{product}/_product_.json Products sit above versions in the config hierarchy.",
+      "properties": {
+        "activeVersion": {
+          "description": "Default version for this product (overrides global site.activeVersion)",
+          "type": "string"
+        },
+        "badge": {
+          "description": "Badge text shown next to the product (e.g., \"New\", \"Beta\")",
+          "type": "string"
+        },
+        "description": {
+          "description": "Short description of the product",
+          "type": "string"
+        },
+        "icon": {
+          "description": "Icon identifier for the product dropdown (lucide icon name)",
+          "type": "string"
+        },
+        "label": {
+          "description": "Display name in the product switcher",
+          "type": "string"
+        },
+        "position": {
+          "description": "Order in the product dropdown (lower = first)",
+          "type": "number"
+        },
+        "tabGroups": {
+          "description": "Product-level tab group overrides",
+          "items": {
+            "$ref": "#/definitions/TabGroup"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
+    "TabGroup": {
+      "additionalProperties": false,
+      "description": "Tab group for organizing documentation",
+      "properties": {
+        "icon": {
+          "description": "Optional icon name (lucide-react icon)",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier for the tab group",
+          "type": "string"
+        },
+        "label": {
+          "description": "Display label for the tab",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "type": "object"
+    }
+  }
+}

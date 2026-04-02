@@ -1,6 +1,6 @@
 {
   "name": "specra",
-  "version": "0.2.8",
+  "version": "0.2.51",
   "description": "A modern documentation library for SvelteKit with built-in versioning, API reference generation, full-text search, and MDX support",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,7 +34,10 @@
     },
     "./styles": "./dist/styles/globals.css",
     "./styles.css": "./dist/styles/globals.css",
-    "./config.schema.json": "./config/specra.config.schema.json"
+    "./config.schema.json": "./config/specra.config.schema.json",
+    "./version.schema.json": "./config/version.schema.json",
+    "./product.schema.json": "./config/product.schema.json",
+    "./category.schema.json": "./config/category.schema.json"
   },
   "files": [
     "dist",
@@ -45,7 +48,7 @@
     "dev": "svelte-package --watch",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json",
-    "generate:schema": "ts-json-schema-generator --path src/lib/config.types.ts --type SpecraConfig --out config/specra.config.schema.json"
+    "generate:schema": "ts-json-schema-generator --path src/lib/config.types.ts --type SpecraConfig --out config/specra.config.schema.json && ts-json-schema-generator --path src/lib/config.types.ts --type VersionConfig --out config/version.schema.json && ts-json-schema-generator --path src/lib/config.types.ts --type ProductConfig --out config/product.schema.json && ts-json-schema-generator --path src/lib/category.ts --type CategoryConfig --out config/category.schema.json"
   },
   "keywords": [
     "documentation",

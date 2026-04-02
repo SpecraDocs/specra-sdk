@@ -1,0 +1,83 @@
+{
+  "$ref": "#/definitions/VersionConfig",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "BannerConfig": {
+      "additionalProperties": false,
+      "description": "Banner configuration for version-level or site-level banners.   Site-wide banner configuration",
+      "properties": {
+        "text": {
+          "description": "Banner message text. Supports markdown links like [text](/url).",
+          "type": "string"
+        },
+        "type": {
+          "description": "Banner style: info, warning, error, success   Banner type",
+          "enum": [
+            "info",
+            "warning",
+            "error",
+            "success"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "TabGroup": {
+      "additionalProperties": false,
+      "description": "Tab group for organizing documentation",
+      "properties": {
+        "icon": {
+          "description": "Optional icon name (lucide-react icon)",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique identifier for the tab group",
+          "type": "string"
+        },
+        "label": {
+          "description": "Display label for the tab",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "type": "object"
+    },
+    "VersionConfig": {
+      "additionalProperties": false,
+      "description": "Per-version configuration that can override global config settings. Loaded from docs/{version}/_version_.json",
+      "properties": {
+        "badge": {
+          "description": "Short badge text shown next to the version (e.g., \"Beta\", \"LTS\", \"Deprecated\").",
+          "type": "string"
+        },
+        "banner": {
+          "$ref": "#/definitions/BannerConfig",
+          "description": "Banner shown at the top of every page in this version. Overrides global banner."
+        },
+        "hidden": {
+          "description": "Hide this version from the version switcher. Useful for unreleased versions.",
+          "type": "boolean"
+        },
+        "label": {
+          "description": "Display label for this version (e.g., \"v1.0 (Stable)\"). Defaults to directory name.",
+          "type": "string"
+        },
+        "tabGroups": {
+          "description": "Override tab groups for this version. Empty array = no tabs.",
+          "items": {
+            "$ref": "#/definitions/TabGroup"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

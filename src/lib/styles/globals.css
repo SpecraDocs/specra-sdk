@@ -159,28 +159,39 @@
     text-decoration: none;
   }
 
-  /* Link styling - primary color, no underline until hover */
+  /* Prose text links - underlined for readability */
   main .prose a {
     color: var(--color-primary);
-    text-decoration: none;
-    transition: color 0.2s ease, text-decoration 0.2s ease;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+    transition: text-decoration-color 0.2s ease;
   }
 
   main .prose a:hover {
-    text-decoration: none !important;
-    color: var(--color-primary);
+    text-decoration-color: var(--color-primary);
   }
 
-  /* Prose links in documentation */
   .prose a {
     color: var(--color-primary);
-    text-decoration: none !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
     font-weight: 500;
   }
 
   .prose a:hover {
+    text-decoration-color: var(--color-primary);
+  }
+
+  /* Navigation/UI links inside prose - no underline */
+  .prose .not-prose a,
+  .prose nav a,
+  .prose [data-doc-nav] a,
+  .prose .doc-navigation a {
     text-decoration: none !important;
-    color: var(--color-primary);
   }
 
   /* Sidebar links - no underline on hover */

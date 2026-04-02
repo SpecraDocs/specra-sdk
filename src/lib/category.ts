@@ -16,7 +16,7 @@ export interface CategoryConfig {
   tab_group?: string  // Tab group ID for organizing categories into tabs
 }
 
-const DOCS_DIR = path.join(process.cwd(), "docs")
+const DOCS_DIR = typeof process !== 'undefined' ? path.join(process.cwd(), "docs") : "docs"
 
 /**
  * Read category.json from a folder

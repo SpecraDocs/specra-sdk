@@ -14,7 +14,7 @@ import { watch } from 'fs'
 import { join } from 'path'
 import { PerfTimer, logCacheOperation } from './dev-utils'
 
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isDevelopment = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development'
 
 // Cache stores
 const versionsCache = {

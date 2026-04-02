@@ -175,7 +175,7 @@ export function reloadConfig(userConfig: Partial<SpecraConfig>): SpecraConfig {
  * Returns null if the file doesn't exist or is invalid.
  */
 const versionConfigCache = new Map<string, { data: VersionConfig | null; timestamp: number }>()
-const VCFG_TTL = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') ? 5000 : 60000
+const VCFG_TTL = process.env.NODE_ENV === 'development' ? 5000 : 60000
 
 export function loadVersionConfig(version: string, product?: string): VersionConfig | null {
   const cacheKey = product && product !== "_default_" ? `${product}:${version}` : version
@@ -291,7 +291,7 @@ const productsCache = {
   timestamp: 0,
 }
 
-const PCFG_TTL = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') ? 5000 : 60000
+const PCFG_TTL = process.env.NODE_ENV === 'development' ? 5000 : 60000
 
 /** Cache for individual product configs */
 const productConfigCache = new Map<string, { data: ProductConfig | null; timestamp: number }>()

@@ -3,7 +3,7 @@
  * Only active in development mode
  */
 
-const isDevelopment = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development'
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 /**
  * Performance timer for measuring operation duration

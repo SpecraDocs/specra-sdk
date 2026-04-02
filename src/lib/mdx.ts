@@ -17,7 +17,7 @@ import { sanitizePath, validatePathWithinDirectory, validateMDXSecurity } from "
 import { getConfig } from "./config"
 import type { I18nConfig } from "./config.types"
 
-const DOCS_DIR = path.join(process.cwd(), "docs")
+const DOCS_DIR = typeof process !== 'undefined' ? path.join(process.cwd(), "docs") : "docs"
 
 /**
  * Resolve the docs directory for a given version and optional product.

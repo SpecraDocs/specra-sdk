@@ -40,7 +40,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each params as param, index}
+          {#each params.filter(p => p && p.name) as param, index}
             <tr
               class={index !== params.length - 1 ? 'border-b border-border/50' : ''}
             >

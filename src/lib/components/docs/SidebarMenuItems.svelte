@@ -57,7 +57,28 @@
       : `/docs/${version}`
   );
 
-  let collapsed: Record<string, boolean> = $state({});
+  const STORAGE_KEY = 'specra-sidebar-collapsed';
+
+  function loadCollapsedState(): Record<string, boolean> {
+    if (typeof window === 'undefined') return {};
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveCollapsedState(state: Record<string, boolean>) {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage unavailable
+    }
+  }
+
+  let collapsed: Record<string, boolean> = $state(loadCollapsedState());
   let pathname = $derived($page.url.pathname.replace(/\/$/, ''));
 
   // Filter docs by active tab group if tab groups are configured
@@ -180,6 +201,7 @@
 
   function toggleSection(section: string) {
     collapsed = { ...collapsed, [section]: !collapsed[section] };
+    saveCollapsedState(collapsed);
   }
 
   function isActiveInGroup(group: SidebarGroup): boolean {

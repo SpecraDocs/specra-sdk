@@ -146,8 +146,13 @@ export class OpenApiParser implements ApiSpecParser {
     const result = { path: [] as ApiParam[], query: [] as ApiParam[], header: [] as ApiParam[] }
 
     for (const param of parameters) {
+      if (!param) continue
+
       // Resolve $ref if present
       const resolved = param.$ref ? this.resolveRef(param.$ref, spec) : param
+
+      // Skip params that failed to resolve or have no name
+      if (!resolved || !resolved.name || !resolved.in) continue
 
       const apiParam: ApiParam = {
         name: resolved.name,
@@ -243,7 +248,7 @@ export class OpenApiParser implements ApiSpecParser {
 
     for (const segment of path) {
       current = current[segment]
-      if (!current) return {}
+      if (!current) return null
     }
 
     return current

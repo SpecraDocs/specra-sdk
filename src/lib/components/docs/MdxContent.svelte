@@ -26,7 +26,9 @@
     {#if Comp}
       {#if node.children && node.children.length > 0}
         <svelte:component this={Comp} {...node.props}>
-          <MdxContent nodes={node.children} {components} />
+          {#snippet children()}
+            <MdxContent nodes={node.children} {components} />
+          {/snippet}
         </svelte:component>
       {:else}
         <svelte:component this={Comp} {...node.props} />

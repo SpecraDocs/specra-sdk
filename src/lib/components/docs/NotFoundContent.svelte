@@ -3,11 +3,19 @@
 
   interface Props {
     version?: string;
+    product?: string;
   }
 
-  let { version = '' }: Props = $props();
+  let { version = '', product = '' }: Props = $props();
 
-  const homeLink = $derived(version ? `/${version}` : '/');
+  /** URL prefix: /docs/{product}/{version} for named products, /docs/{version} for default */
+  const homeLink = $derived(
+    product && product !== '_default_' && version
+      ? `/docs/${product}/${version}`
+      : version
+        ? `/docs/${version}`
+        : '/'
+  );
 </script>
 
 <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">

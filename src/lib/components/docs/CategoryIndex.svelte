@@ -1,5 +1,6 @@
 <script lang="ts">
   import { FileText, ArrowRight } from 'lucide-svelte';
+  import { base } from '$app/paths';
   import type { SpecraConfig } from '$lib/config.types.js';
   import type { Snippet } from 'svelte';
 
@@ -54,8 +55,8 @@
 
   const baseUrl = $derived(
     product && product !== '_default_'
-      ? `/docs/${product}`
-      : '/docs'
+      ? `${base}/docs/${product}`
+      : `${base}/docs`
   );
 
   // Note: We always use '/docs' as the base for non-product routes.

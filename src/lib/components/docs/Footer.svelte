@@ -1,6 +1,15 @@
 <script lang="ts">
   import type { SpecraConfig } from '$lib/config.types.js';
+  import { base } from '$app/paths';
   import Logo from './Logo.svelte';
+
+  /** Prefix internal links with base path */
+  function resolveHref(href: string): string {
+    if (href.startsWith('/') && !href.startsWith('//')) {
+      return `${base}${href}`;
+    }
+    return href;
+  }
 
   interface Props {
     config: SpecraConfig;
@@ -25,7 +34,7 @@
               {#each column.items as item, itemIdx (itemIdx)}
                 <li>
                   <a
-                    href={item.href}
+                    href={resolveHref(item.href)}
                     class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.label}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChevronDown, Check } from 'lucide-svelte';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { browser } from '$app/environment';
   import Icon from './Icon.svelte';
 
@@ -107,9 +108,9 @@
 
     const version = product.activeVersion || 'v1.0.0';
     if (product.isDefault) {
-      goto(`/docs/${version}`);
+      goto(`${base}/docs/${version}`);
     } else {
-      goto(`/docs/${product.slug}/${version}`);
+      goto(`${base}/docs/${product.slug}/${version}`);
     }
   }
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { ChevronRight, ChevronDown, Lock } from 'lucide-svelte';
   import type { SpecraConfig } from '$lib/config.types.js';
   import Icon from './Icon.svelte';
@@ -50,11 +51,11 @@
 
   let { docs = [], version, product, onLinkClick, config, activeTabGroup }: Props = $props();
 
-  /** URL prefix: /docs/{product}/{version} for named products, /docs/{version} for default */
+  /** URL prefix: {base}/docs/{product}/{version} for named products, {base}/docs/{version} for default */
   let docsBase = $derived(
     product && product !== '_default_'
-      ? `/docs/${product}/${version}`
-      : `/docs/${version}`
+      ? `${base}/docs/${product}/${version}`
+      : `${base}/docs/${version}`
   );
 
   const STORAGE_KEY = 'specra-sidebar-collapsed';

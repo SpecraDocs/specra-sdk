@@ -1,5 +1,6 @@
 <script lang="ts">
   import { FileQuestion, Home, ArrowLeft } from 'lucide-svelte';
+  import { base } from '$app/paths';
 
   interface Props {
     version?: string;
@@ -11,10 +12,10 @@
   /** URL prefix: /docs/{product}/{version} for named products, /docs/{version} for default */
   const homeLink = $derived(
     product && product !== '_default_' && version
-      ? `/docs/${product}/${version}`
+      ? `${base}/docs/${product}/${version}`
       : version
-        ? `/docs/${version}`
-        : '/'
+        ? `${base}/docs/${version}`
+        : `${base}/`
   );
 </script>
 

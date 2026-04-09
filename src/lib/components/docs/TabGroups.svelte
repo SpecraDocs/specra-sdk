@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChevronDown } from 'lucide-svelte';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import type { TabGroup, SpecraConfig } from '$lib/config.types.js';
   import Icon from './Icon.svelte';
 
@@ -32,8 +33,8 @@
 
   let docsBase = $derived(
     product && product !== '_default_' && version
-      ? `/docs/${product}/${version}`
-      : version ? `/docs/${version}` : '/docs'
+      ? `${base}/docs/${product}/${version}`
+      : version ? `${base}/docs/${version}` : `${base}/docs`
   );
 
   let dropdownOpen = $state(false);

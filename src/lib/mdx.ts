@@ -2,6 +2,7 @@ import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
 import yaml from "js-yaml"
+import { rehypeBasePath } from "./rehype-base-path.js"
 import { unified } from "unified"
 import remarkParse from "remark-parse"
 import remarkGfm from "remark-gfm"
@@ -414,8 +415,25 @@ function parseJsxExpression(expr: string): any {
 /**
  * Process markdown content to HTML using remark/rehype pipeline.
  */
+function resolveDeploymentBasePath(): string {
+  if (process.env.BASE_PATH) return process.env.BASE_PATH
+  try {
+    const configPath = path.join(process.cwd(), 'specra.config.json')
+    if (fs.existsSync(configPath)) {
+      const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+      if (raw.deployment?.basePath && !raw.deployment?.customDomain) {
+        const bp = raw.deployment.basePath
+        return bp.startsWith('/') ? bp : `/${bp}`
+      }
+    }
+  } catch { /* ignore */ }
+  return ''
+}
+
 async function processMarkdownToHtml(markdown: string): Promise<string> {
-  const result = await unified()
+  const basePath = resolveDeploymentBasePath()
+
+  const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
@@ -423,6 +441,12 @@ async function processMarkdownToHtml(markdown: string): Promise<string> {
     .use(rehypeRaw)
     .use(rehypeSlug)
     .use(rehypeKatex)
+
+  if (basePath) {
+    processor.use(rehypeBasePath, { basePath })
+  }
+
+  const result = await processor
     .use(rehypeStringify)
     .process(markdown)
 
@@ -1100,6 +1124,8 @@ async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
   // Ensure component block integrity in the markdown
   const normalized = ensureComponentBlockIntegrity(dedented)
 
+  const basePath = resolveDeploymentBasePath()
+
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
@@ -1108,6 +1134,10 @@ async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
     .use(rehypeRaw)
     .use(rehypeSlug)
     .use(rehypeKatex)
+
+  if (basePath) {
+    processor.use(rehypeBasePath, { basePath })
+  }
 
   const mdast = processor.parse(normalized)
   const hast = await processor.run(mdast)

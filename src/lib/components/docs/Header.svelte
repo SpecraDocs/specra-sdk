@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Search, Menu, Github, Twitter, MessageCircle } from 'lucide-svelte';
+  import { base } from '$app/paths';
   import { getConfigContext } from '$lib/stores/config.js';
   import { sidebarStore } from '$lib/stores/sidebar.js';
   import VersionSwitcher from './VersionSwitcher.svelte';
@@ -110,7 +111,7 @@
       >
         <Menu class="h-5 w-5" />
       </button>
-      <a href="/" class="flex items-center gap-2">
+      <a href="{base}/" class="flex items-center gap-2">
         {#if !config.site.hideLogo}
           {#if config.site.logo}
             <Logo logo={config.site.logo} alt={config.site.title} className="w-18 object-contain" />

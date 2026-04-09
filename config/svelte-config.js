@@ -19,6 +19,7 @@ import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
 import fs from 'fs'
 import path from 'path'
+import { rehypeBasePath } from '../dist/rehype-base-path.js'
 
 /**
  * Get mdsvex preprocessor config with all Specra remark/rehype plugins
@@ -72,7 +73,7 @@ function resolveBasePath(configPath = path.join(process.cwd(), 'specra.config.js
  * Scan the docs/ directory and return prerender entries for all version root pages.
  * This ensures adapter-static discovers and prerenders every version, not just the active one.
  */
-function discoverVersionEntries(basePath = '', docsDir = path.join(process.cwd(), 'docs')) {
+function discoverVersionEntries(docsDir = path.join(process.cwd(), 'docs')) {
   const entries = ['/']
   try {
     if (!fs.existsSync(docsDir)) return entries
@@ -80,7 +81,7 @@ function discoverVersionEntries(basePath = '', docsDir = path.join(process.cwd()
     const items = fs.readdirSync(docsDir, { withFileTypes: true })
     for (const item of items) {
       if (item.isDirectory() && /^v\d/.test(item.name)) {
-        entries.push(`${basePath}/docs/${item.name}`)
+        entries.push(`/docs/${item.name}`)
       }
     }
   } catch {
@@ -99,11 +100,20 @@ export function specraConfig(options = {}) {
   const userPrerender = options.kit?.prerender || {}
   const basePath = options.kit?.paths?.base ?? resolveBasePath()
 
+  // Inject base path rehype plugin into mdsvex if basePath is set
+  const mdsvexOptions = options.mdsvex || {}
+  if (basePath) {
+    mdsvexOptions.rehypePlugins = [
+      ...(mdsvexOptions.rehypePlugins || []),
+      [rehypeBasePath, { basePath }],
+    ]
+  }
+
   return {
     extensions: ['.svelte', '.md', '.svx', '.mdx'],
     preprocess: [
       ...(vitePreprocess ? [vitePreprocess()] : []),
-      mdsvex(specraMdsvexConfig(options.mdsvex || {}))
+      mdsvex(specraMdsvexConfig(mdsvexOptions))
     ],
     kit: {
       ...options.kit,
@@ -115,7 +125,7 @@ export function specraConfig(options = {}) {
         handleHttpError: 'warn',
         handleMissingId: 'warn',
         handleUnseenRoutes: 'warn',
-        entries: discoverVersionEntries(basePath),
+        entries: discoverVersionEntries(),
         ...userPrerender,
       }
     }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+  import { base } from '$app/paths';
 
   interface NavDoc {
     title: string;
@@ -17,8 +18,8 @@
 
   let docsBase = $derived(
     product && product !== '_default_'
-      ? `/docs/${product}/${version}`
-      : `/docs/${version}`
+      ? `${base}/docs/${product}/${version}`
+      : `${base}/docs/${version}`
   );
 </script>
 

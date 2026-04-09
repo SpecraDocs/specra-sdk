@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronRight } from 'lucide-svelte';
+  import { base } from '$app/paths';
   import { getConfigContext } from '$lib/stores/config.js';
 
   interface Props {
@@ -13,8 +14,8 @@
 
   let docsBase = $derived(
     product && product !== '_default_'
-      ? `/docs/${product}/${version}`
-      : `/docs/${version}`
+      ? `${base}/docs/${product}/${version}`
+      : `${base}/docs/${version}`
   );
 
   const configStore = getConfigContext();

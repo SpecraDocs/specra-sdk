@@ -3,12 +3,25 @@
  * Internal links start with "/" and don't start with "http" or "//".
  *
  * Used for GitHub Pages deployments where the site lives under a subpath.
+ *
+ * Manually walks the tree to avoid ESM/CJS issues with unist-util-visit
+ * when loaded from svelte-config.js at Node.js config time.
  */
-import { visit } from 'unist-util-visit'
-import type { Root, Element } from 'hast'
+import type { Root, Element, RootContent } from 'hast'
 
 interface Options {
   basePath?: string
+}
+
+function walkElements(nodes: RootContent[], fn: (node: Element) => void) {
+  for (const node of nodes) {
+    if (node.type === 'element') {
+      fn(node)
+      if (node.children) {
+        walkElements(node.children as RootContent[], fn)
+      }
+    }
+  }
 }
 
 export function rehypeBasePath(options: Options = {}) {
@@ -18,7 +31,7 @@ export function rehypeBasePath(options: Options = {}) {
   const cleanBase = basePath.replace(/\/$/, '')
 
   return (tree: Root) => {
-    visit(tree, 'element', (node: Element) => {
+    walkElements(tree.children as RootContent[], (node: Element) => {
       if (node.tagName === 'a' && node.properties?.href) {
         const href = node.properties.href as string
         if (typeof href === 'string' && href.startsWith('/') && !href.startsWith('//') && !href.startsWith(cleanBase + '/')) {

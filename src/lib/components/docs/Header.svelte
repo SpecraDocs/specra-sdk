@@ -21,7 +21,8 @@
     hidden?: boolean;
   }
 
-  interface ProductItem {
+  /** Flat shape (from page components) */
+  interface ProductItemFlat {
     slug: string;
     label: string;
     icon?: string;
@@ -30,13 +31,27 @@
     isDefault: boolean;
   }
 
+  /** Nested shape (from SDK getProducts()) */
+  interface ProductItemNested {
+    slug: string;
+    config: {
+      label: string;
+      icon?: string;
+      badge?: string;
+      activeVersion?: string;
+    };
+    isDefault: boolean;
+  }
+
+  type ProductInput = ProductItemFlat | ProductItemNested;
+
   interface Props {
     currentVersion: string;
     versions: string[];
     versionsMeta?: VersionMeta[];
     versionBanner?: BannerConfig;
     config?: SpecraConfig;
-    products?: ProductItem[];
+    products?: ProductInput[];
     currentProduct?: string;
     subheader?: Snippet;
   }

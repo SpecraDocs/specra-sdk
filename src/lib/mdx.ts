@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
+import yaml from "js-yaml"
 import { unified } from "unified"
 import remarkParse from "remark-parse"
 import remarkGfm from "remark-gfm"
@@ -1243,7 +1244,14 @@ function readDocFromFile(filePath: string, originalSlug: string): Doc | null {
     }
 
     const fileContents = fs.readFileSync(filePath, "utf8")
-    const { data, content } = matter(fileContents)
+    const { data, content } = matter(fileContents, {
+      engines: {
+        yaml: {
+          parse: (str: string) => yaml.load(str) as Record<string, unknown>,
+          stringify: (obj: Record<string, unknown>) => yaml.dump(obj),
+        },
+      },
+    })
 
     // Security: Validate MDX content for dangerous patterns
     const securityCheck = validateMDXSecurity(content, {

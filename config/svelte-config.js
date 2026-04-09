@@ -49,18 +49,26 @@ export function specraMdsvexConfig(options = {}) {
  * Read the deployment basePath from specra.config.json if present.
  * Falls back to the BASE_PATH environment variable, then empty string.
  */
+/**
+ * Normalize a base path: ensure leading slash, strip trailing slash.
+ * "task_flow" → "/task_flow", "/task_flow/" → "/task_flow", "" → ""
+ */
+function normalizeBasePath(bp) {
+  if (!bp) return ''
+  let normalized = bp.startsWith('/') ? bp : `/${bp}`
+  return normalized.replace(/\/+$/, '')
+}
+
 function resolveBasePath(configPath = path.join(process.cwd(), 'specra.config.json')) {
   // Environment variable takes priority
-  if (process.env.BASE_PATH) return process.env.BASE_PATH
+  if (process.env.BASE_PATH) return normalizeBasePath(process.env.BASE_PATH)
 
   try {
     if (fs.existsSync(configPath)) {
       const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'))
       if (raw.deployment?.basePath) {
-        const bp = raw.deployment.basePath
-        // If custom domain is set, ignore basePath
         if (raw.deployment?.customDomain) return ''
-        return bp.startsWith('/') ? bp : `/${bp}`
+        return normalizeBasePath(raw.deployment.basePath)
       }
     }
   } catch {

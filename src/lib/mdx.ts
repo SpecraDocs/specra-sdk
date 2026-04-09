@@ -415,15 +415,20 @@ function parseJsxExpression(expr: string): any {
 /**
  * Process markdown content to HTML using remark/rehype pipeline.
  */
+function normalizeBasePath(bp: string): string {
+  if (!bp) return ''
+  let normalized = bp.startsWith('/') ? bp : `/${bp}`
+  return normalized.replace(/\/+$/, '')
+}
+
 function resolveDeploymentBasePath(): string {
-  if (process.env.BASE_PATH) return process.env.BASE_PATH
+  if (process.env.BASE_PATH) return normalizeBasePath(process.env.BASE_PATH)
   try {
     const configPath = path.join(process.cwd(), 'specra.config.json')
     if (fs.existsSync(configPath)) {
       const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'))
       if (raw.deployment?.basePath && !raw.deployment?.customDomain) {
-        const bp = raw.deployment.basePath
-        return bp.startsWith('/') ? bp : `/${bp}`
+        return normalizeBasePath(raw.deployment.basePath)
       }
     }
   } catch { /* ignore */ }

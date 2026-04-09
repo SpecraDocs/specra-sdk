@@ -7,30 +7,23 @@ export function cn(...inputs: ClassValue[]) {
 
 
 /**
- * Get the correct asset path based on deployment configuration
- * Handles different deployment scenarios:
- * - Vercel/Node.js hosting (standalone build): No basePath needed
- * - GitHub Pages without custom domain: Uses basePath from config
- * - Static hosting with custom domain: No basePath needed
+ * Get the correct asset path based on deployment configuration.
+ * Uses SvelteKit's base path (from kit.paths.base) which is resolved
+ * from deployment.basePath in specra.config.json or the BASE_PATH env var.
  *
- * @param path - The asset path (can start with or without '/')
- * @returns The properly formatted asset path
+ * @param assetPath - The asset path (can start with or without '/')
+ * @returns The properly formatted asset path with base prefix
  */
-export function getAssetPath(path: string): string {
-  // Get basePath from Next.js config (set during build for static exports)
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || process.env.__NEXT_ROUTER_BASEPATH || ''
+export function getAssetPath(assetPath: string): string {
+  const basePath = process.env.BASE_PATH || ''
 
-  // Normalize the input path: ensure it starts with '/'
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const normalizedPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`
 
-  // If we have a basePath (GitHub Pages without custom domain), prepend it
   if (basePath) {
-    // Normalize basePath: remove trailing slash, ensure leading slash
     const normalizedBase = basePath.startsWith('/') ? basePath : `/${basePath}`
     const cleanBase = normalizedBase.replace(/\/$/, '')
     return `${cleanBase}${normalizedPath}`
   }
 
-  // Default: return the normalized path (works for Vercel, custom domains, and dev)
   return normalizedPath
 }

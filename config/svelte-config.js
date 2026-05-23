@@ -78,8 +78,27 @@ function resolveBasePath(configPath = path.join(process.cwd(), 'specra.config.js
 }
 
 /**
- * Scan the docs/ directory and return prerender entries for all version root pages.
- * This ensures adapter-static discovers and prerenders every version, not just the active one.
+ * Scan the docs/ directory and return prerender entries for every
+ * version-root page across all products and the default (no-product)
+ * layout. SvelteKit's prerender crawler picks up child pages by
+ * following links, but the version-root pages themselves are leaves
+ * with no inbound link from a prerendered ancestor (the product
+ * dropdown switches between them client-side), so adapter-static
+ * needs them seeded explicitly. Without these entries, navigating
+ * from one product to another in a static build fetches a
+ * non-existent `__data.json` and falls back through to the SPA
+ * `index.html` — the client then JSON.parse's HTML and throws
+ * `Unexpected token '<', "<!doctype html>"`.
+ *
+ * Layouts we handle:
+ *   docs/v1/...                 → emit `/docs/v1`
+ *   docs/v2/...                 → emit `/docs/v2`
+ *   docs/sdk/_product_.json     → recurse: docs/sdk/v1 → emit `/docs/sdk/v1`
+ *   docs/api/_product_.json     → recurse: docs/api/v1 → emit `/docs/api/v1`
+ *
+ * `_product_.json` is the marker file Specra uses to identify a
+ * multi-product layout (the same marker the SDK's product loader
+ * reads).
  */
 function discoverVersionEntries(docsDir = path.join(process.cwd(), 'docs')) {
   const entries = ['/']
@@ -88,12 +107,33 @@ function discoverVersionEntries(docsDir = path.join(process.cwd(), 'docs')) {
 
     const items = fs.readdirSync(docsDir, { withFileTypes: true })
     for (const item of items) {
-      if (item.isDirectory() && /^v\d/.test(item.name)) {
+      if (!item.isDirectory()) continue
+
+      // Default-product version: docs/v1 → /docs/v1
+      if (/^v\d/.test(item.name)) {
         entries.push(`/docs/${item.name}`)
+        continue
+      }
+
+      // Multi-product: directory has a _product_.json marker. Recurse
+      // into it and emit one entry per version subdirectory.
+      const productDir = path.join(docsDir, item.name)
+      const productMarker = path.join(productDir, '_product_.json')
+      if (!fs.existsSync(productMarker)) continue
+
+      try {
+        const versionItems = fs.readdirSync(productDir, { withFileTypes: true })
+        for (const v of versionItems) {
+          if (v.isDirectory() && /^v\d/.test(v.name)) {
+            entries.push(`/docs/${item.name}/${v.name}`)
+          }
+        }
+      } catch {
+        // Ignore product-dir read errors — leave that product unseeded.
       }
     }
   } catch {
-    // Ignore errors — fall back to just '/'
+    // Ignore top-level errors — fall back to just '/'.
   }
   return entries
 }

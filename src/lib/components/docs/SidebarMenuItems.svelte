@@ -88,16 +88,30 @@
   );
 
   let filteredDocs = $derived.by(() => {
-    if (hasTabGroups && activeTabGroup) {
-      return docs.filter((doc) => {
-        const docTabGroup = doc.meta?.tab_group || doc.categoryTabGroup;
-        if (!docTabGroup) {
-          return activeTabGroup === config.navigation?.tabGroups?.[0]?.id;
-        }
-        return docTabGroup === activeTabGroup;
-      });
-    }
-    return docs;
+    if (!hasTabGroups) return docs;
+
+    // Fall back to the first tab group when activeTabGroup isn't set —
+    // that happens whenever the current doc has no `tab_group` in its
+    // frontmatter and no `_category_.json` ancestor with a tab_group.
+    // Without this fallback the sidebar bypasses tab filtering entirely
+    // and renders every doc, while the tab bar still visually highlights
+    // the first tab (TabGroups.svelte applies the same fallback on its
+    // own `activeTab`). The end result looked like "every tab contains
+    // every doc" — but the real cause was that the sidebar's filter just
+    // wasn't running.
+    const effectiveTabGroup =
+      activeTabGroup || config.navigation?.tabGroups?.[0]?.id;
+    if (!effectiveTabGroup) return docs;
+
+    const firstTabId = config.navigation?.tabGroups?.[0]?.id;
+    return docs.filter((doc) => {
+      const docTabGroup = doc.meta?.tab_group || doc.categoryTabGroup;
+      if (!docTabGroup) {
+        // Unlabeled docs land in the first tab group (Getting Started).
+        return effectiveTabGroup === firstTabId;
+      }
+      return docTabGroup === effectiveTabGroup;
+    });
   });
 
   // Build hierarchical tree structure

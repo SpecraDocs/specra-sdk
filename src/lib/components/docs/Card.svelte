@@ -27,7 +27,7 @@
         {title}
       </h3>
       {#if description}
-        <p class="text-sm text-muted-foreground line-clamp-2 no-underline">{description}</p>
+        <p class="text-sm text-muted-foreground no-underline">{description}</p>
       {/if}
       {#if children}
         <div class="mt-2 text-sm text-muted-foreground no-underline">
@@ -50,14 +50,14 @@
 {#if href}
   <a
     {href}
-    class="card-link group block p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all"
+    class="card-link group block h-full p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all"
     target={external ? '_blank' : undefined}
     rel={external ? 'noopener noreferrer' : undefined}
   >
     {@render cardContent(true)}
   </a>
 {:else}
-  <div class="p-4 rounded-xl border border-border bg-muted/30 no-underline">
+  <div class="h-full p-4 rounded-xl border border-border bg-muted/30 no-underline">
     {@render cardContent(false)}
   </div>
 {/if}

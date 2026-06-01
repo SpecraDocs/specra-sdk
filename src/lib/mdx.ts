@@ -120,6 +120,93 @@ const PROP_NAME_MAP: Record<string, string> = {
  * processed by JSX/component preprocessing functions.
  * Matches 3+ backticks or tildes as fence markers.
  */
+/**
+ * Private Use Area character used to mask `|` inside inline code spans
+ * so that remark-gfm's table tokenizer doesn't treat them as cell dividers.
+ *
+ * Why: GFM splits table cells on `|` BEFORE inline parsing recognizes
+ * backtick-delimited code spans. So a row like
+ *   | `{{ name | upper }}` |
+ * gets split on the inner pipe, breaking the row. Escaping with `\|` is
+ * the GFM-spec workaround, but inside an inline code span the `\` renders
+ * literally — useless for users. We swap `|` for U+E000 before parsing
+ * and swap it back in the output; PUA chars pass through remark/rehype
+ * unchanged and are never HTML-escaped.
+ */
+const PIPE_MARKER = ''
+
+/**
+ * Mask `|` characters inside single-line markdown inline code spans by
+ * replacing them with `PIPE_MARKER`. Operates only on non-fenced segments.
+ * Idempotent: if no inline code contains `|`, output equals input.
+ */
+function maskInlineCodePipes(markdown: string): string {
+  return splitByCodeFences(markdown).map(({ text, isCode }) => {
+    if (isCode) return text
+    let result = ''
+    let i = 0
+    while (i < text.length) {
+      if (text[i] !== '`') {
+        result += text[i]
+        i++
+        continue
+      }
+      // Count opening backtick run
+      let openLen = 0
+      while (i + openLen < text.length && text[i + openLen] === '`') openLen++
+      // Find matching closing run of the same length on the same line.
+      // (Inline code spans inside table cells are always single-line.)
+      let j = i + openLen
+      let closeIdx = -1
+      while (j < text.length && text[j] !== '\n') {
+        if (text[j] === '`') {
+          let closeLen = 0
+          while (j + closeLen < text.length && text[j + closeLen] === '`') closeLen++
+          if (closeLen === openLen) { closeIdx = j; break }
+          j += closeLen
+        } else {
+          j++
+        }
+      }
+      if (closeIdx === -1) {
+        // Unmatched run — emit verbatim
+        result += text.slice(i, i + openLen)
+        i += openLen
+      } else {
+        const content = text.slice(i + openLen, closeIdx).replace(/\|/g, PIPE_MARKER)
+        result += text.slice(i, i + openLen) + content + text.slice(closeIdx, closeIdx + openLen)
+        i = closeIdx + openLen
+      }
+    }
+    return result
+  }).join('')
+}
+
+/**
+ * Restore `PIPE_MARKER` back to `|` in a string. No-op if the marker
+ * isn't present (the common case), so cheap to call blanket.
+ */
+function restorePipeMarkers(s: string): string {
+  return s.indexOf(PIPE_MARKER) === -1 ? s : s.split(PIPE_MARKER).join('|')
+}
+
+/**
+ * Walk an MdxNode tree and restore `PIPE_MARKER` to `|` in every string
+ * field that could carry the marker (html content, string props, children).
+ */
+function restorePipeMarkersInNodes(nodes: MdxNode[]): void {
+  for (const node of nodes) {
+    if (node.content) node.content = restorePipeMarkers(node.content)
+    if (node.props) {
+      for (const key of Object.keys(node.props)) {
+        const v = node.props[key]
+        if (typeof v === 'string') node.props[key] = restorePipeMarkers(v)
+      }
+    }
+    if (node.children && node.children.length > 0) restorePipeMarkersInNodes(node.children)
+  }
+}
+
 function splitByCodeFences(markdown: string): Array<{ text: string; isCode: boolean }> {
   const fencedCodeRegex = /(^|\n)((`{3,}|~{3,}).*\n[\s\S]*?\n\3\s*(?:\n|$))/g
   const segments: Array<{ text: string; isCode: boolean }> = []
@@ -437,6 +524,7 @@ function resolveDeploymentBasePath(): string {
 
 async function processMarkdownToHtml(markdown: string): Promise<string> {
   const basePath = resolveDeploymentBasePath()
+  const masked = maskInlineCodePipes(markdown)
 
   const processor = unified()
     .use(remarkParse)
@@ -453,9 +541,9 @@ async function processMarkdownToHtml(markdown: string): Promise<string> {
 
   const result = await processor
     .use(rehypeStringify)
-    .process(markdown)
+    .process(masked)
 
-  return String(result)
+  return restorePipeMarkers(String(result))
 }
 
 /**
@@ -1118,8 +1206,12 @@ function ensureComponentBlockIntegrity(markdown: string): string {
 }
 
 async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
+  // Mask pipes inside inline code spans so GFM tables containing
+  // `{{ x | filter }}`-style code don't get their rows broken.
+  const masked = maskInlineCodePipes(markdown)
+
   // Pre-process JSX expression attributes into HTML-safe string attributes
-  const preprocessed = preprocessJsxExpressions(markdown)
+  const preprocessed = preprocessJsxExpressions(masked)
 
   // Dedent content inside component tags so that indented children
   // (e.g. <Tabs> inside <Step>) don't get treated as code blocks
@@ -1149,7 +1241,9 @@ async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
 
   // The hast root has children - process them into MdxNodes
   const children = (hast as any).children || []
-  return hastChildrenToMdxNodes(children)
+  const nodes = await hastChildrenToMdxNodes(children)
+  restorePipeMarkersInNodes(nodes)
+  return nodes
 }
 
 /**

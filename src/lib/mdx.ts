@@ -3,6 +3,7 @@ import path from "path"
 import matter from "gray-matter"
 import yaml from "js-yaml"
 import { rehypeBasePath } from "./rehype-base-path.js"
+import { remarkCodeMeta } from "./remark-code-meta.js"
 import { unified } from "unified"
 import remarkParse from "remark-parse"
 import remarkGfm from "remark-gfm"
@@ -530,6 +531,7 @@ async function processMarkdownToHtml(markdown: string): Promise<string> {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
+    .use(remarkCodeMeta)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSlug)
@@ -592,8 +594,14 @@ function extractCodeBlockProps(node: any): { code: string; language: string; fil
   // Extract text content from the code element
   const code = extractTextContent(codeChild).replace(/\n$/, '')
 
-  // Check for filename in data attributes (e.g. from remark-code-meta)
-  const filename = node.properties?.['data-filename'] || codeChild.properties?.['data-filename']
+  // Check for filename in data attributes (set by remark-code-meta from a
+  // `title="..."` fence meta). rehypeRaw normalises `data-filename` to the
+  // camel-cased `dataFilename` hast property, so accept both spellings.
+  const filename =
+    node.properties?.dataFilename ||
+    node.properties?.['data-filename'] ||
+    codeChild.properties?.dataFilename ||
+    codeChild.properties?.['data-filename']
 
   return { code, language, ...(filename ? { filename } : {}) }
 }
@@ -1227,6 +1235,7 @@ async function processMarkdownToMdxNodes(markdown: string): Promise<MdxNode[]> {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
+    .use(remarkCodeMeta)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSlug)

@@ -581,7 +581,7 @@ function isComponentElement(node: any): boolean {
  * Check if a hast node is a fenced code block (<pre><code class="language-*">).
  * Returns the extracted props for CodeBlock if it is, or null otherwise.
  */
-function extractCodeBlockProps(node: any): { code: string; language: string; filename?: string } | null {
+function extractCodeBlockProps(node: any): { code: string; language: string; filename?: string; showLineNumbers?: boolean } | null {
   if (node.type !== 'element' || node.tagName !== 'pre') return null
   const codeChild = node.children?.find((c: any) => c.type === 'element' && c.tagName === 'code')
   if (!codeChild) return null
@@ -594,16 +594,23 @@ function extractCodeBlockProps(node: any): { code: string; language: string; fil
   // Extract text content from the code element
   const code = extractTextContent(codeChild).replace(/\n$/, '')
 
-  // Check for filename in data attributes (set by remark-code-meta from a
-  // `title="..."` fence meta). rehypeRaw normalises `data-filename` to the
-  // camel-cased `dataFilename` hast property, so accept both spellings.
-  const filename =
-    node.properties?.dataFilename ||
-    node.properties?.['data-filename'] ||
-    codeChild.properties?.dataFilename ||
-    codeChild.properties?.['data-filename']
+  // Read attributes set by remark-code-meta from the fence meta. rehypeRaw
+  // normalises `data-foo` to the camel-cased `dataFoo` hast property, so accept
+  // both spellings, on either the <pre> or the <code>.
+  const readDataAttr = (camel: string, kebab: string): any =>
+    node.properties?.[camel] ?? node.properties?.[kebab] ??
+    codeChild.properties?.[camel] ?? codeChild.properties?.[kebab]
 
-  return { code, language, ...(filename ? { filename } : {}) }
+  const filename = readDataAttr('dataFilename', 'data-filename')
+  const lineNumbers = readDataAttr('dataLineNumbers', 'data-line-numbers')
+  const showLineNumbers = lineNumbers === 'true' || lineNumbers === true || lineNumbers === ''
+
+  return {
+    code,
+    language,
+    ...(filename ? { filename } : {}),
+    ...(showLineNumbers ? { showLineNumbers: true } : {}),
+  }
 }
 
 /**

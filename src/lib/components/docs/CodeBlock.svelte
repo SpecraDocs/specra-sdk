@@ -6,9 +6,14 @@
     language: string;
     filename?: string;
     showLineNumbers?: boolean;
+    diff?: boolean;
   }
 
-  let { code, language, filename, showLineNumbers = false }: Props = $props();
+  let { code, language, filename, showLineNumbers = false, diff = false }: Props = $props();
+
+  // Diff add/remove markers apply either to a `diff` language or to any block
+  // explicitly opted in via the `diff` fence-meta flag.
+  let diffEnabled = $derived(diff || language === 'diff');
 
   // Languages whose syntax the JS/TS-oriented tokenizer below does NOT model.
   // Highlighting these would mis-colour prose markup (e.g. a markdown list `-`
@@ -125,7 +130,7 @@
 
   <!-- Code content -->
   <div class="bg-muted/30 dark:bg-muted/20 rounded-b-xl overflow-x-auto border border-border/50">
-    <pre class="p-2 text-[13px] font-mono leading-relaxed text-gray-800 dark:text-gray-200"><code class="table w-full">{#each lines as line, i}{@const isDeletion = language === 'diff' && line.startsWith('-') && !line.startsWith('--')}{@const isAddition = language === 'diff' && line.startsWith('+') && !line.startsWith('++')}{@const isDiff = isDeletion || isAddition}{@const diffBgClass = isDeletion ? 'bg-red-500/5 dark:bg-red-500/10' : isAddition ? 'bg-green-500/5 dark:bg-green-500/10' : ''}{@const diffMarkerClass = isDeletion ? 'text-red-600 dark:text-red-400' : isAddition ? 'text-green-600 dark:text-green-400' : ''}{@const tokens = isPlain ? [] : tokenizeLine(line)}<div class="table-row {diffBgClass}">{#if showLineNumbers}<span class="table-cell pr-4 text-right select-none text-muted-foreground/40 w-8 align-top">{i + 1}</span>{/if}<span class="table-cell align-top">{#if isPlain}{#if line}{line}{:else}&nbsp;{/if}{:else}{#if tokens.length === 0}&nbsp;{:else}{#each tokens as token, j}{#if j === 0 && isDiff && token.value.length > 0 && (token.value[0] === '+' || token.value[0] === '-')}<span class="{diffMarkerClass} font-bold">{token.value[0]}</span>{#if token.value.length > 1}<span class="token-{token.type}">{token.value.slice(1)}</span>{/if}{:else}<span class="token-{token.type}">{token.value}</span>{/if}{/each}{/if}{/if}</span></div>{/each}</code></pre>
+    <pre class="p-2 text-[13px] font-mono leading-relaxed text-gray-800 dark:text-gray-200"><code class="table w-full">{#each lines as line, i}{@const isDeletion = diffEnabled && line.startsWith('-') && !line.startsWith('--')}{@const isAddition = diffEnabled && line.startsWith('+') && !line.startsWith('++')}{@const isDiff = isDeletion || isAddition}{@const diffBgClass = isDeletion ? 'bg-red-500/5 dark:bg-red-500/10' : isAddition ? 'bg-green-500/5 dark:bg-green-500/10' : ''}{@const diffMarkerClass = isDeletion ? 'text-red-600 dark:text-red-400' : isAddition ? 'text-green-600 dark:text-green-400' : ''}{@const tokens = isPlain ? [] : tokenizeLine(line)}<div class="table-row {diffBgClass}">{#if showLineNumbers}<span class="table-cell pr-4 text-right select-none text-muted-foreground/40 w-8 align-top">{i + 1}</span>{/if}<span class="table-cell align-top">{#if isPlain}{#if isDiff}<span class="{diffMarkerClass} font-bold">{line[0]}</span>{line.slice(1)}{:else}{#if line}{line}{:else}&nbsp;{/if}{/if}{:else}{#if tokens.length === 0}&nbsp;{:else}{#each tokens as token, j}{#if j === 0 && isDiff && token.value.length > 0 && (token.value[0] === '+' || token.value[0] === '-')}<span class="{diffMarkerClass} font-bold">{token.value[0]}</span>{#if token.value.length > 1}<span class="token-{token.type}">{token.value.slice(1)}</span>{/if}{:else}<span class="token-{token.type}">{token.value}</span>{/if}{/each}{/if}{/if}</span></div>{/each}</code></pre>
   </div>
 </div>
 

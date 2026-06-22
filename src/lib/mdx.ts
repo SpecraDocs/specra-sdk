@@ -581,7 +581,7 @@ function isComponentElement(node: any): boolean {
  * Check if a hast node is a fenced code block (<pre><code class="language-*">).
  * Returns the extracted props for CodeBlock if it is, or null otherwise.
  */
-function extractCodeBlockProps(node: any): { code: string; language: string; filename?: string; showLineNumbers?: boolean } | null {
+function extractCodeBlockProps(node: any): { code: string; language: string; filename?: string; showLineNumbers?: boolean; diff?: boolean } | null {
   if (node.type !== 'element' || node.tagName !== 'pre') return null
   const codeChild = node.children?.find((c: any) => c.type === 'element' && c.tagName === 'code')
   if (!codeChild) return null
@@ -604,12 +604,15 @@ function extractCodeBlockProps(node: any): { code: string; language: string; fil
   const filename = readDataAttr('dataFilename', 'data-filename')
   const lineNumbers = readDataAttr('dataLineNumbers', 'data-line-numbers')
   const showLineNumbers = lineNumbers === 'true' || lineNumbers === true || lineNumbers === ''
+  const diffAttr = readDataAttr('dataDiff', 'data-diff')
+  const diff = diffAttr === 'true' || diffAttr === true || diffAttr === ''
 
   return {
     code,
     language,
     ...(filename ? { filename } : {}),
     ...(showLineNumbers ? { showLineNumbers: true } : {}),
+    ...(diff ? { diff: true } : {}),
   }
 }
 

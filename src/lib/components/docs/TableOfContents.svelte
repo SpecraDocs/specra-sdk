@@ -2,6 +2,7 @@
   import { browser } from '$app/environment';
   import type { SpecraConfig } from '$lib/config.types.js';
   import type { TOCItem } from '$lib/toc.js';
+  import { renderInlineCode } from '$lib/inline.js';
 
   interface Props {
     items: TOCItem[];
@@ -84,7 +85,7 @@
               ? 'text-primary font-medium'
               : 'text-foreground hover:bg-accent/50'}"
           >
-            {item.title}
+            {@html renderInlineCode(item.title)}
           </a>
         {/each}
       </nav>

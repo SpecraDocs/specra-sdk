@@ -5,6 +5,7 @@
   import type { SpecraConfig } from '$lib/config.types.js';
   import Icon from './Icon.svelte';
   import { sortSidebarItems, sortSidebarGroups } from '$lib/sidebar-utils.js';
+  import { renderInlineCode } from '$lib/inline.js';
 
   interface DocItem {
     title: string;
@@ -302,7 +303,7 @@
         {#if group.icon}
           <Icon icon={group.icon} size={16} className="shrink-0" />
         {/if}
-        {group.label}
+        {@html renderInlineCode(group.label)}
       </a>
 
       {#if hasContent && group.collapsible && config.navigation?.collapsibleSidebar}
@@ -342,7 +343,7 @@
               {#if item.doc.meta?.icon}
                 <Icon icon={item.doc.meta.icon} size={16} className="shrink-0" />
               {/if}
-              {item.doc.title}
+              {@html renderInlineCode(item.doc.title)}
               {#if item.doc.meta?.isProtected}
                 <Lock size={14} class="shrink-0 text-muted-foreground ml-auto" />
               {/if}
@@ -369,7 +370,7 @@
         {#if doc.meta?.icon}
           <Icon icon={doc.meta.icon} size={16} className="shrink-0" />
         {/if}
-        {doc.title}
+        {@html renderInlineCode(doc.title)}
         {#if doc.meta?.isProtected}
           <Lock size={14} class="shrink-0 text-muted-foreground ml-auto" />
         {/if}

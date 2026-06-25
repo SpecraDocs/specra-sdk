@@ -30,6 +30,7 @@ export type {
 
 // Utilities
 export * from './utils.js'
+export * from './links.js'
 export * from './sidebar-utils.js'
 export * from './category.js'
 export * from './redirects.js'

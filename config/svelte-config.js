@@ -166,6 +166,12 @@ export function specraConfig(options = {}) {
     kit: {
       ...options.kit,
       paths: {
+        // Absolute (base-prefixed) links rather than relative ones. Under a
+        // subpath deployment, relative links (the SvelteKit default) interact
+        // badly with the prerender crawler and produce wrong targets; absolute
+        // `${base}/...` links resolve and crawl correctly. Override via
+        // options.kit.paths.relative if a site truly needs relative output.
+        relative: false,
         ...options.kit?.paths,
         base: basePath,
       },

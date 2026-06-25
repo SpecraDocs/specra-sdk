@@ -2,6 +2,7 @@
   import { ArrowRight, ExternalLink } from 'lucide-svelte';
   import type { Snippet } from 'svelte';
   import Icon from './Icon.svelte';
+  import { link } from '../../links.js';
 
   interface Props {
     title: string;
@@ -13,6 +14,10 @@
   }
 
   let { title, description, href, icon, external = false, children }: Props = $props();
+
+  // Apply the deployment base path to internal absolute hrefs (e.g. /docs/...),
+  // since rehype only rewrites plain markdown links, not component props.
+  const resolvedHref = $derived(href && href.startsWith('/') ? link(href) : href);
 </script>
 
 {#snippet cardContent(isLink: boolean)}
@@ -49,7 +54,7 @@
 
 {#if href}
   <a
-    {href}
+    href={resolvedHref}
     class="card-link group block h-full p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all"
     target={external ? '_blank' : undefined}
     rel={external ? 'noopener noreferrer' : undefined}

@@ -10,8 +10,14 @@
 import type { Doc } from './mdx'
 import { getVersions, getAllDocs, getDocBySlug } from './mdx'
 import { clearProductCaches } from './config.server'
-import { watch } from 'fs'
-import { join } from 'path'
+// Default imports (member access) rather than named imports: under a
+// browser/static build these node builtins are externalized, and named imports
+// (`{ join }`) fail the client bundle with "not exported by
+// __vite-browser-external". Member access (`path.join`) defers to runtime and
+// is dead code client-side, since these caches only run server-side. Matches
+// the import style in mdx.ts / config.server.ts / category.ts.
+import fs from 'fs'
+import path from 'path'
 import { PerfTimer, logCacheOperation } from './dev-utils'
 
 const isDevelopment = typeof process !== 'undefined' && process.env?.NODE_ENV === 'development'
@@ -46,10 +52,10 @@ function initializeWatchers() {
   if (!isDevelopment || watchersInitialized) return
 
   watchersInitialized = true
-  const docsPath = join(process.cwd(), 'docs')
+  const docsPath = path.join(process.cwd(), 'docs')
 
   try {
-    watch(docsPath, { recursive: true }, (eventType, filename) => {
+    fs.watch(docsPath, { recursive: true }, (eventType, filename) => {
       if (!filename) return
 
       // Invalidate relevant caches when MDX or JSON files change

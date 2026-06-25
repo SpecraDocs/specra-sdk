@@ -1,10 +1,14 @@
 {
   "name": "specra",
-  "version": "0.2.61",
+  "version": "0.2.62",
   "description": "A modern documentation library for SvelteKit with built-in versioning, API reference generation, full-text search, and MDX support",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.svelte"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

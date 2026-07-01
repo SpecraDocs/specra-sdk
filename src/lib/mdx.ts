@@ -1108,10 +1108,15 @@ function dedentComponentChildren(markdown: string): string {
     }
 
     if (minIndent > 0 && minIndent !== Infinity) {
-      // Dedent non-code-fence lines by the common indent.
-      // Code fence lines are left as-is to preserve their content.
-      const dedented = lines.map((line, i) => {
-        if (codeFenceLines.has(i)) return line
+      // Dedent every non-empty line by the common indent, including code-fence
+      // lines and their content. Code lines are excluded from the min-indent
+      // *calculation* above (so a column-0 code line doesn't pin minIndent to 0),
+      // but they must still be dedented here: leaving an indented fence at its
+      // original column (e.g. 4 spaces) turns it into a CommonMark *indented*
+      // code block (fences allow <=3 spaces of indent), which renders the raw
+      // ```lang fence literally. The Math.min cap strips only the shared wrapper
+      // indent, never a line's meaningful internal indentation.
+      const dedented = lines.map((line) => {
         if (line.trim().length === 0) return line
         return line.slice(Math.min(minIndent, line.match(/^(\s*)/)?.[1].length ?? 0))
       }).join('\n')
